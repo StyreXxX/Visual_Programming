@@ -13,30 +13,32 @@ import com.badlogic.gdx.math.Rectangle;
 
 public class Boss {
     private Texture walkSheet, attackSheet, specialAttackSheet, dashSheet, deathSheet;
+    private Texture chargeSheet;
     private Animation<TextureRegion> walkAnim, attackAnim, specialAttackAnim, dashAnim, deathAnim;
+    private Animation<TextureRegion> chargeAnim;
     private TextureRegion idleFrame;
     public Rectangle bounds;
     private float stateTime;
 
     public boolean isDead = false;
+    public boolean isAwake = false;
     private boolean isAttacking = false;
     private boolean isSpecialAttacking = false;
     private boolean isDashing = false;
+    private boolean isCharging = false;
     private boolean facingRight = false;
-    private boolean isAwake = false;
 
     // --- Physics & Action Variables ---
     private float velocityY = 0;
     private final float GRAVITY = -1500f;
-    private final float JUMP_SPEED = 700f;
+    private final float BASE_JUMP_SPEED = 700f;
     private float dashTime = 0f;
     private float dashSpeed = 500f;
 
     private float patrolMinX = 500f;
     private float patrolMaxX = 900f;
-    private float speed = 100f;
+    private float baseSpeed = 100f;
 
-    // INCREASED HEALTH
     public int maxHealth = 40;
     public int health = 40;
 
@@ -46,16 +48,16 @@ public class Boss {
         specialAttackSheet = new Texture(Gdx.files.internal("FirstBossAttack.png"));
         dashSheet = new Texture(Gdx.files.internal("bossDash.png"));
         deathSheet = new Texture(Gdx.files.internal("EnemyDeath.png"));
+        chargeSheet = new Texture(Gdx.files.internal("bossCharge.png"));
 
         walkAnim = createAnimation(walkSheet, 4, 0.2f);
         attackAnim = createAnimation(attackSheet, 4, 0.15f);
         specialAttackAnim = createAnimation(specialAttackSheet, 4, 0.15f);
         dashAnim = createAnimation(dashSheet, 3, 0.1f);
         deathAnim = createAnimation(deathSheet, 4, 0.2f);
+        chargeAnim = createAnimation(chargeSheet, 4, 0.15f);
 
         idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
-
-        // INCREASED SIZE (from 80x80 to 120x120)
         bounds = new Rectangle(startX, startY, 120, 120);
 
         patrolMinX = startX - 200f;
@@ -97,7 +99,37 @@ public class Boss {
             stateTime += delta;
             float oldX = bounds.x;
 
-            if (isDashing) {
+            // --- PHASE SYSTEM VARIABLES ---
+            float currentSpeed = baseSpeed;
+            float currentJumpSpeed = BASE_JUMP_SPEED;
+            float jumpProbability = 0.01f;
+            float teleportProbability = 0f;
+
+            if (health <= maxHealth * 0.2f) {
+                // PHASE 3 (Below 20%): Hyper aggressive, frequent teleports
+                currentSpeed = baseSpeed * 2.2f;
+                currentJumpSpeed = BASE_JUMP_SPEED + 150f;
+                jumpProbability = 0.05f;
+                teleportProbability = 0.015f;
+            } else if (health <= maxHealth * 0.5f) {
+                // PHASE 2 (Below 50%): Faster, frequent jumps, rare teleports
+                currentSpeed = baseSpeed * 1.6f;
+                currentJumpSpeed = BASE_JUMP_SPEED + 100f;
+                jumpProbability = 0.03f;
+                teleportProbability = 0.003f;
+            }
+
+            // --- EXECUTE STATES ---
+            if (isCharging) {
+                bounds.x += (facingRight ? 600f : -600f) * delta;
+                if (chargeAnim.isAnimationFinished(stateTime)) {
+                    isCharging = false;
+                } else if (bounds.overlaps(player.bounds) && !player.isDead) {
+                    player.takeDamage(3);
+                    isCharging = false;
+                }
+            }
+            else if (isDashing) {
                 dashTime += delta;
                 bounds.x += (facingRight ? dashSpeed : -dashSpeed) * delta;
 
@@ -111,12 +143,21 @@ public class Boss {
             }
             else if (isGrounded && !isAttacking && !isSpecialAttacking) {
                 if (player.isDead) {
-                    patrol(delta);
+                    patrol(delta, currentSpeed);
                 } else {
-                    // WIDENED ATTACK REACH for the larger boss body
                     Rectangle attackReach = new Rectangle(bounds.x - 30, bounds.y, bounds.width + 60, bounds.height);
 
-                    if (attackReach.overlaps(player.bounds)) {
+                    // 1. Check for Teleport
+                    if (teleportProbability > 0 && Math.random() < teleportProbability) {
+                        float teleportOffset = (Math.random() > 0.5) ? 80f : -80f;
+                        bounds.x = player.bounds.x + teleportOffset;
+                        bounds.y = player.bounds.y + 20f; // Drop in slightly above
+                        facingRight = player.bounds.x > bounds.x;
+                        velocityY = -100f; // Snap downward slightly
+                        stateTime = 0;
+                    }
+                    // 2. Standard Attack Range
+                    else if (attackReach.overlaps(player.bounds)) {
                         facingRight = player.bounds.x > bounds.x;
                         if (Math.random() < 0.3) {
                             isSpecialAttacking = true;
@@ -128,19 +169,26 @@ public class Boss {
                     else if (distanceToPlayer < 400) {
                         facingRight = player.bounds.x > bounds.x;
 
-                        if (Math.random() < 0.02) {
-                            if (Math.random() < 0.5) {
-                                isDashing = true;
-                                dashTime = 0;
-                            } else {
-                                velocityY = JUMP_SPEED;
-                            }
-                        } else {
-                            bounds.x += (facingRight ? speed : -speed) * delta;
+                        // 3. Long Range Charge
+                        if (distanceToPlayer > 300 && Math.random() < 0.02) {
+                            isCharging = true;
+                            stateTime = 0;
+                        }
+                        // 4. Mid Range Dash
+                        else if (distanceToPlayer > 200 && Math.random() < 0.02) {
+                            isDashing = true;
+                            dashTime = 0;
+                        }
+                        // 5. Jump or March
+                        else if (distanceToPlayer <= 200 && Math.random() < jumpProbability) {
+                            velocityY = currentJumpSpeed;
+                        }
+                        else {
+                            bounds.x += (facingRight ? currentSpeed : -currentSpeed) * delta;
                         }
                     }
                     else {
-                        patrol(delta);
+                        patrol(delta, currentSpeed);
                     }
                 }
             }
@@ -148,8 +196,9 @@ public class Boss {
             if (checkCollision(bounds, blocks)) {
                 bounds.x = oldX;
                 if (isDashing) isDashing = false;
+                if (isCharging) isCharging = false;
 
-                if (!isDashing && !isAttacking && !isSpecialAttacking) {
+                if (!isDashing && !isCharging && !isAttacking && !isSpecialAttacking) {
                     facingRight = !facingRight;
                 }
             }
@@ -175,12 +224,12 @@ public class Boss {
         }
     }
 
-    private void patrol(float delta) {
+    private void patrol(float delta, float currentSpeed) {
         if (facingRight) {
-            bounds.x += speed * delta;
+            bounds.x += currentSpeed * delta;
             if (bounds.x > patrolMaxX) facingRight = false;
         } else {
-            bounds.x -= speed * delta;
+            bounds.x -= currentSpeed * delta;
             if (bounds.x < patrolMinX) facingRight = true;
         }
     }
@@ -227,6 +276,8 @@ public class Boss {
             currentFrame = deathAnim.getKeyFrame(stateTime, false);
         } else if (!isAwake) {
             currentFrame = idleFrame;
+        } else if (isCharging) {
+            currentFrame = chargeAnim.getKeyFrame(stateTime, false);
         } else if (isDashing) {
             currentFrame = dashAnim.getKeyFrame(dashTime, true);
         } else if (isSpecialAttacking) {
@@ -239,7 +290,6 @@ public class Boss {
             currentFrame = walkAnim.getKeyFrame(stateTime, true);
         }
 
-        // INCREASED VISUAL SPRITE (from 120x120 to 180x180)
         drawFlipped(batch, currentFrame, bounds.x - 30, bounds.y, 180, 180, facingRight);
     }
 
@@ -257,5 +307,6 @@ public class Boss {
         specialAttackSheet.dispose();
         dashSheet.dispose();
         deathSheet.dispose();
+        chargeSheet.dispose();
     }
 }
