@@ -14,35 +14,47 @@ import com.badlogic.gdx.utils.Array;
 
 public class Player {
     private Texture walkSheet, attackSheet, deathSheet;
+    private Texture staffWalkSheet, staffAttackSheet;
+
     private Animation<TextureRegion> walkAnim, attackAnim, deathAnim;
-    private TextureRegion idleFrame;
+    private Animation<TextureRegion> staffWalkAnim, staffAttackAnim;
+    private TextureRegion idleFrame, staffIdleFrame;
+
     public Rectangle bounds;
     private float stateTime;
     private boolean isAttacking;
     public boolean facingRight = true;
     public boolean isDead = false;
+    public boolean hasStaff = false;
 
-    // --- Physics Variables ---
     private float velocityY = 0;
     private final float GRAVITY = -1500f;
-    private final float JUMP_SPEED =900f;
+    private final float JUMP_SPEED = 900f;
     private final float PLAYER_SPEED = 550f;
 
     public int maxHealth = 10;
     public int health = 10;
 
     public Player(float startX, float startY) {
+        // Standard Sheets
         walkSheet = new Texture(Gdx.files.internal("MCWalking.png"));
         attackSheet = new Texture(Gdx.files.internal("MainCharacterAttack.png"));
         deathSheet = new Texture(Gdx.files.internal("deathanimation.png"));
+
+        // Staff Sheets
+        staffWalkSheet = new Texture(Gdx.files.internal("mainCharacterStaffWalking.png"));
+        staffAttackSheet = new Texture(Gdx.files.internal("mainCharacterStaffAttack.png"));
 
         walkAnim = createAnimation(walkSheet, 4, 0.15f);
         attackAnim = createAnimation(attackSheet, 3, 0.1f);
         deathAnim = createAnimation(deathSheet, 4, 0.2f);
 
-        idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
+        staffWalkAnim = createAnimation(staffWalkSheet, 4, 0.15f);
+        staffAttackAnim = createAnimation(staffAttackSheet, 3, 0.1f);
 
-        // Update the bounds to use the new parameters
+        idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
+        staffIdleFrame = new TextureRegion(staffWalkSheet, 0, 0, staffWalkSheet.getWidth() / 4, staffWalkSheet.getHeight());
+
         bounds = new Rectangle(startX, startY, 64, 64);
     }
 
@@ -55,6 +67,10 @@ public class Player {
         return new Animation<>(frameDuration, frames);
     }
 
+    public void equipStaff() {
+        this.hasStaff = true;
+    }
+
     public void update(float delta, Array<Projectile> projectiles, MapObjects blocks) {
         if (health <= 0 && !isDead) {
             isDead = true;
@@ -64,26 +80,21 @@ public class Player {
         stateTime += delta;
         if (isDead) return;
 
-        // --- Y-Axis Movement (Gravity & Floor Collision) ---
         float oldY = bounds.y;
         velocityY += GRAVITY * delta;
         bounds.y += velocityY * delta;
 
         boolean isGrounded = false;
         if (checkCollision(bounds, blocks)) {
-            bounds.y = oldY; // Snap back up
-            if (velocityY < 0) { // If falling
-                isGrounded = true;
-            }
+            bounds.y = oldY;
+            if (velocityY < 0) isGrounded = true;
             velocityY = 0;
         }
 
-        // Jump Logic
         if (isGrounded && !isAttacking && (Gdx.input.isKeyJustPressed(Input.Keys.W) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE))) {
             velocityY = JUMP_SPEED;
         }
 
-        // --- X-Axis Movement (Walking & Wall Collision) ---
         float oldX = bounds.x;
         if (!isAttacking) {
             if (Gdx.input.isKeyPressed(Input.Keys.A)) {
@@ -94,7 +105,6 @@ public class Player {
                 facingRight = true;
             }
 
-            // Snap back if we hit a wall
             if (checkCollision(bounds, blocks)) {
                 bounds.x = oldX;
             }
@@ -106,13 +116,12 @@ public class Player {
             }
         }
 
-        if (isAttacking && attackAnim.isAnimationFinished(stateTime)) {
+        Animation<TextureRegion> currentAttackAnim = hasStaff ? staffAttackAnim : attackAnim;
+        if (isAttacking && currentAttackAnim.isAnimationFinished(stateTime)) {
             isAttacking = false;
         }
     }
 
-    // Helper to check against all Tiled map rectangles
-// Helper to check against all Tiled map rectangles AND polygons
     private boolean checkCollision(Rectangle characterBounds, MapObjects blocks) {
         for (MapObject object : blocks) {
             Rectangle rect = null;
@@ -120,8 +129,6 @@ public class Player {
             if (object instanceof RectangleMapObject) {
                 rect = ((RectangleMapObject) object).getRectangle();
             } else if (object instanceof com.badlogic.gdx.maps.objects.PolygonMapObject) {
-                // If it's a polygon, we grab a rectangle that perfectly surrounds it
-                // so our custom collision math still works!
                 rect = ((com.badlogic.gdx.maps.objects.PolygonMapObject) object).getPolygon().getBoundingRectangle();
             }
 
@@ -152,23 +159,36 @@ public class Player {
     private void spawnProjectile(Array<Projectile> projectiles) {
         float px = facingRight ? bounds.x + 50 : bounds.x - 20;
         float py = bounds.y + 30;
-        projectiles.add(new Projectile(px, py, facingRight));
+
+        // Spawn staff projectile (type 2) if staff is equipped, otherwise standard (type 1)
+        int projType = hasStaff ? 2 : 1;
+        projectiles.add(new Projectile(px, py, facingRight, projType));
     }
 
     public void draw(SpriteBatch batch) {
-        TextureRegion currentFrame = idleFrame;
+        TextureRegion currentFrame = hasStaff ? staffIdleFrame : idleFrame;
 
         if (isDead) {
             currentFrame = deathAnim.getKeyFrame(stateTime, false);
         } else if (isAttacking) {
-            currentFrame = attackAnim.getKeyFrame(stateTime, false);
+            currentFrame = (hasStaff ? staffAttackAnim : attackAnim).getKeyFrame(stateTime, false);
         } else if (velocityY != 0) {
-            currentFrame = walkAnim.getKeyFrame(0);
+            currentFrame = (hasStaff ? staffWalkAnim : walkAnim).getKeyFrame(0);
         } else if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.D)) {
-            currentFrame = walkAnim.getKeyFrame(stateTime, true);
+            currentFrame = (hasStaff ? staffWalkAnim : walkAnim).getKeyFrame(stateTime, true);
         }
 
-        drawFlipped(batch, currentFrame, bounds.x, bounds.y, 100, 100, facingRight);
+        // Lock the height to 100 to keep the character's vertical size consistent
+        float drawHeight = 100f;
+
+        // Calculate the width dynamically based on the frame's true aspect ratio
+        float aspect = (float) currentFrame.getRegionWidth() / currentFrame.getRegionHeight();
+        float drawWidth = drawHeight * aspect;
+
+        // Center the sprite perfectly over your 64x64 physics hitbox
+        float drawX = bounds.x + (bounds.width / 2f) - (drawWidth / 2f);
+
+        drawFlipped(batch, currentFrame, drawX, bounds.y, drawWidth, drawHeight, facingRight);
     }
 
     private void drawFlipped(SpriteBatch batch, TextureRegion region, float x, float y, float width, float height, boolean faceRight) {
@@ -183,5 +203,7 @@ public class Player {
         walkSheet.dispose();
         attackSheet.dispose();
         deathSheet.dispose();
+        staffWalkSheet.dispose();
+        staffAttackSheet.dispose();
     }
 }
