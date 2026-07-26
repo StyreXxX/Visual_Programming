@@ -45,18 +45,24 @@ public class GreenGuardianGame extends ApplicationAdapter {
     private Array<Enemy> enemies;
     private Array<Projectile> projectiles;
 
+    // NEW: Array to hold collectible map souls
+    private Array<Rectangle> mapSouls;
+
     private Texture swordProjectileTexture;
     private Texture staffProjectileTexture;
-    private Texture staffDisplayTexture; // Magic Staff item icon for store
+    private Texture staffDisplayTexture;
 
     // --- UI & Economy ---
     private Texture shopTexture;
     private Texture soulTexture;
     private int playerSouls = 0;
 
+    // NEW: Increased weapon cost
+    private final int STAFF_COST = 150;
+
     // --- State Flags ---
     private boolean isGameOver = false;
-    private boolean isShopOpen = false; // NEW Shop Open State
+    private boolean isShopOpen = false;
     private String shopMessage = "";
 
     private float pStartX = 100f, pStartY = 300f;
@@ -87,6 +93,7 @@ public class GreenGuardianGame extends ApplicationAdapter {
         staffDisplayTexture = new Texture(Gdx.files.internal("magicStaff.png"));
 
         enemies = new Array<>();
+        mapSouls = new Array<>();
 
         if (map.getLayers().get("spawns") != null) {
             for (MapObject obj : map.getLayers().get("spawns").getObjects()) {
@@ -102,6 +109,9 @@ public class GreenGuardianGame extends ApplicationAdapter {
                         bStartY = scaledY;
                     } else if (obj.getName().equalsIgnoreCase("Enemy")) {
                         enemies.add(new Enemy(scaledX, scaledY));
+                    } else if (obj.getName().equalsIgnoreCase("Soul")) {
+                        // NEW: Spawn collectible souls from the Tiled Map
+                        mapSouls.add(new Rectangle(scaledX, scaledY, 32, 32));
                     }
                 }
             }
@@ -111,14 +121,12 @@ public class GreenGuardianGame extends ApplicationAdapter {
         boss = new Boss(bStartX, bStartY);
         projectiles = new Array<>();
 
-        // Create Sword Projectile Texture (Green)
         Pixmap p1 = new Pixmap(16, 8, Pixmap.Format.RGBA8888);
         p1.setColor(Color.GREEN);
         p1.fill();
         swordProjectileTexture = new Texture(p1);
         p1.dispose();
 
-        // Create Staff Projectile Texture (Cyan Arc)
         Pixmap p2 = new Pixmap(28, 16, Pixmap.Format.RGBA8888);
         p2.setColor(Color.CYAN);
         p2.fill();
@@ -140,14 +148,21 @@ public class GreenGuardianGame extends ApplicationAdapter {
         }
         enemies.clear();
         projectiles.clear();
+        mapSouls.clear();
         playerSouls = 0;
 
         if (map.getLayers().get("spawns") != null) {
             for (MapObject obj : map.getLayers().get("spawns").getObjects()) {
-                if (obj.getName() != null && obj.getName().equalsIgnoreCase("Enemy")) {
+                if (obj.getName() != null) {
                     float scaledX = (float) obj.getProperties().get("x") * 2.5f;
                     float scaledY = (float) obj.getProperties().get("y") * 2.5f;
-                    enemies.add(new Enemy(scaledX, scaledY));
+
+                    if (obj.getName().equalsIgnoreCase("Enemy")) {
+                        enemies.add(new Enemy(scaledX, scaledY));
+                    } else if (obj.getName().equalsIgnoreCase("Soul")) {
+                        // Respawn souls on map restart
+                        mapSouls.add(new Rectangle(scaledX, scaledY, 32, 32));
+                    }
                 }
             }
         }
@@ -167,7 +182,7 @@ public class GreenGuardianGame extends ApplicationAdapter {
 
         // --- INPUT & UPDATE HANDLING ---
         if (Gdx.input.isKeyJustPressed(Input.Keys.B) && !isGameOver && !boss.isDead) {
-            isShopOpen = !isShopOpen; // Toggle Shop Menu
+            isShopOpen = !isShopOpen;
             shopMessage = "";
         }
 
@@ -178,12 +193,11 @@ public class GreenGuardianGame extends ApplicationAdapter {
                 resetGame();
             }
         } else if (isShopOpen) {
-            // Purchase logic inside shop
             if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
                 if (player.hasStaff) {
                     shopMessage = "ALREADY OWNED!";
-                } else if (playerSouls >= 45) {
-                    playerSouls -= 45;
+                } else if (playerSouls >= STAFF_COST) {
+                    playerSouls -= STAFF_COST;
                     player.equipStaff();
                     shopMessage = "PURCHASE SUCCESSFUL!";
                 } else {
@@ -206,6 +220,12 @@ public class GreenGuardianGame extends ApplicationAdapter {
         // --- DRAW GAME WORLD OBJECTS ---
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
+
+        // NEW: Draw collectible souls on the map
+        for (Rectangle s : mapSouls) {
+            batch.draw(soulTexture, s.x, s.y, s.width, s.height);
+        }
+
         for (Enemy e : enemies) {
             e.draw(batch);
         }
@@ -214,7 +234,7 @@ public class GreenGuardianGame extends ApplicationAdapter {
         drawProjectiles();
         batch.end();
 
-        // --- DRAW WORLD SHAPES (Floating enemy health bars) ---
+        // --- DRAW WORLD SHAPES ---
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         for (Enemy e : enemies) {
@@ -222,7 +242,6 @@ public class GreenGuardianGame extends ApplicationAdapter {
         }
         shapeRenderer.end();
 
-        // Enable alpha blending
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
@@ -232,7 +251,6 @@ public class GreenGuardianGame extends ApplicationAdapter {
 
         drawHealthBars();
 
-        // OVERLAYS (Game Over / Victory / Shop)
         if (isGameOver) {
             shapeRenderer.setColor(0f, 0f, 0f, 0.65f);
             shapeRenderer.rect(0, 0, 1280, 720);
@@ -242,14 +260,13 @@ public class GreenGuardianGame extends ApplicationAdapter {
             shapeRenderer.setColor(0.8f, 0.1f, 0.1f, 1f);
             shapeRenderer.rect(440, 455, 400, 5);
         } else if (isShopOpen) {
-            // Dark Shop Overlay Window
             shapeRenderer.setColor(0f, 0f, 0f, 0.75f);
             shapeRenderer.rect(0, 0, 1280, 720);
 
             shapeRenderer.setColor(0.12f, 0.12f, 0.16f, 0.95f);
             shapeRenderer.rect(340, 160, 600, 400);
 
-            shapeRenderer.setColor(0.85f, 0.7f, 0.2f, 1f); // Gold Border
+            shapeRenderer.setColor(0.85f, 0.7f, 0.2f, 1f);
             shapeRenderer.rectLine(340, 160, 940, 160, 3);
             shapeRenderer.rectLine(340, 560, 940, 560, 3);
             shapeRenderer.rectLine(340, 160, 340, 560, 3);
@@ -278,10 +295,8 @@ public class GreenGuardianGame extends ApplicationAdapter {
         batch.begin();
 
         if (!isGameOver && !boss.isDead) {
-            // Shop Icon Top-Right
             batch.draw(shopTexture, 1150, 580, 100, 100);
 
-            // Soul Currency Bottom-Right
             batch.draw(soulTexture, 1120, 30, 50, 50);
             font.setColor(Color.valueOf("B47EE5"));
             font.draw(batch, "x " + playerSouls, 1180, 68);
@@ -295,7 +310,6 @@ public class GreenGuardianGame extends ApplicationAdapter {
             }
         }
 
-        // TEXT OVERLAYS
         if (isShopOpen) {
             font.setColor(Color.GOLD);
             font.draw(batch, "MYSTIC SHOP (Press B to Close)", 420, 530);
@@ -307,7 +321,7 @@ public class GreenGuardianGame extends ApplicationAdapter {
             font.draw(batch, "Damage: 2 | Fast Speed", 500, 380);
 
             font.setColor(Color.valueOf("B47EE5"));
-            font.draw(batch, "Cost: 45 Souls", 500, 340);
+            font.draw(batch, "Cost: " + STAFF_COST + " Souls", 500, 340);
 
             font.setColor(Color.GOLD);
             font.draw(batch, "[Press ENTER to Buy]", 500, 280);
@@ -339,6 +353,15 @@ public class GreenGuardianGame extends ApplicationAdapter {
             e.update(delta, player, mapBlocks);
         }
 
+        // NEW: Check collision with collectible souls
+        for (int i = mapSouls.size - 1; i >= 0; i--) {
+            Rectangle s = mapSouls.get(i);
+            if (player.bounds.overlaps(s)) {
+                playerSouls += 10; // Earn 10 souls per map pickup
+                mapSouls.removeIndex(i); // Remove it from the map once collected
+            }
+        }
+
         if (player.health <= 0 || player.bounds.y < -100) {
             isGameOver = true;
         }
@@ -350,7 +373,7 @@ public class GreenGuardianGame extends ApplicationAdapter {
             boolean projectileHit = false;
 
             if (!boss.isDead && p.bounds.overlaps(boss.bounds)) {
-                boss.takeDamage(p.damage); // Deals projectile damage dynamically!
+                boss.takeDamage(p.damage);
                 projectiles.removeIndex(i);
                 projectileHit = true;
             }
