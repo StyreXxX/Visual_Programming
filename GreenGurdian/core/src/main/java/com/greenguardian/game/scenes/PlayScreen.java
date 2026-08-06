@@ -2,7 +2,7 @@ package com.greenguardian.game.scenes;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.ScreenAdapter;
+// import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -27,6 +27,8 @@ import com.greenguardian.game.entities.Projectile;
 import com.greenguardian.game.ui.HUD;
 
 public class PlayScreen extends BaseScreen {
+    private final float buffer = 6.0f; // Small buffer to prevent camera boundary issues
+
     private ShapeRenderer shapeRenderer;
 
     private OrthographicCamera camera;
@@ -59,23 +61,24 @@ public class PlayScreen extends BaseScreen {
         super(game, batch, font, hudCamera);
         this.shapeRenderer = new ShapeRenderer();
 
-        camera = new OrthographicCamera();
-        viewport = new StretchViewport(1280, 720, camera);
-        camera.position.set(1280 / 2f, 720 / 2f, 0);
+        camera = new OrthographicCamera(); // orthographic means no depth needed, it flattens everything to 2d
+        viewport = new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT, camera); // stretch viewport means it will stretch the game world to fit the screen
+        // center of the screen
+        camera.position.set(WORLD_WIDTH / 2f, WORLD_HEIGHT / 2f, 0);
 
-        map = new TmxMapLoader().load("maps/copy.tmx");
-        mapRenderer = new OrthogonalTiledMapRenderer(map, 2.5f);
-        mapBlocks = map.getLayers().get("blocks").getObjects();
+        map = new TmxMapLoader().load("maps/copy.tmx"); // load the map
+        mapRenderer = new OrthogonalTiledMapRenderer(map, SCALE_FACTOR); // render the map
+        mapBlocks = map.getLayers().get("blocks").getObjects(); // get the blocks from the map
 
         enemies = new Array<>();
         mapSouls = new Array<>();
         projectiles = new Array<>();
 
-        if (map.getLayers().get("spawns") != null) {
-            for (MapObject obj : map.getLayers().get("spawns").getObjects()) {
+        if (map.getLayers().get("spawns") != null) {    // check if the map has spawns layer
+            for (MapObject obj : map.getLayers().get("spawns").getObjects()) { // get the spawns from the map
                 if (obj.getName() != null) {
-                    float scaledX = (float) obj.getProperties().get("x") * 2.5f;
-                    float scaledY = (float) obj.getProperties().get("y") * 2.5f;
+                    float scaledX = (float) obj.getProperties().get("x") * SCALE_FACTOR;
+                    float scaledY = (float) obj.getProperties().get("y") * SCALE_FACTOR;
 
                     if (obj.getName().equalsIgnoreCase("Player")) {
                         pStartX = scaledX;
@@ -84,9 +87,9 @@ public class PlayScreen extends BaseScreen {
                         bStartX = scaledX;
                         bStartY = scaledY;
                     } else if (obj.getName().equalsIgnoreCase("Enemy")) {
-                        enemies.add(new Enemy(scaledX, scaledY, game.assets));
+                        enemies.add(new Enemy(scaledX, scaledY, game.assets)); // add the enemy to the array
                     } else if (obj.getName().equalsIgnoreCase("Soul")) {
-                        mapSouls.add(new Rectangle(scaledX, scaledY, 32, 32));
+                        mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE)); // add the soul to the array
                     }
                 }
             }
@@ -112,13 +115,13 @@ public class PlayScreen extends BaseScreen {
         if (map.getLayers().get("spawns") != null) {
             for (MapObject obj : map.getLayers().get("spawns").getObjects()) {
                 if (obj.getName() != null) {
-                    float scaledX = (float) obj.getProperties().get("x") * 2.5f;
-                    float scaledY = (float) obj.getProperties().get("y") * 2.5f;
+                    float scaledX = (float) obj.getProperties().get("x") * SCALE_FACTOR;
+                    float scaledY = (float) obj.getProperties().get("y") * SCALE_FACTOR;
 
                     if (obj.getName().equalsIgnoreCase("Enemy")) {
                         enemies.add(new Enemy(scaledX, scaledY, game.assets));
                     } else if (obj.getName().equalsIgnoreCase("Soul")) {
-                        mapSouls.add(new Rectangle(scaledX, scaledY, 32, 32));
+                        mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE));
                     }
                 }
             }
@@ -132,8 +135,8 @@ public class PlayScreen extends BaseScreen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f); // Clears the screen with black color
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); // Clears the color buffer
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.B) && !isGameOver && !boss.isDead()) {
             isShopOpen = !isShopOpen;
@@ -160,19 +163,23 @@ public class PlayScreen extends BaseScreen {
             }
         }
 
-        float targetX = player.getBounds().x + (player.getBounds().width / 2);
-        camera.position.x += (targetX - camera.position.x) * 5.0f * delta;
-        if (camera.position.x < 640) camera.position.x = 640;
+        float mapWidthInPixels = map.getProperties().get("width", Integer.class) * map.getProperties().get("tilewidth", Integer.class) * SCALE_FACTOR;
+        float mapHeightInPixels = map.getProperties().get("height", Integer.class) * map.getProperties().get("tileheight", Integer.class) * SCALE_FACTOR;
 
-        float targetY = Math.max(360, player.getBounds().y + (player.getBounds().height / 2));
-        camera.position.y += (targetY - camera.position.y) * 5.0f * delta;
-        camera.update();
+        float targetX = player.getBounds().x + (player.getBounds().width / 2);
+        camera.position.x += (targetX - camera.position.x) * 5.0f * delta; // Follows the player smoothly   
+        camera.position.x = Math.max(WORLD_WIDTH / 2 + buffer, Math.min(camera.position.x, mapWidthInPixels - WORLD_WIDTH / 2 - buffer)); // Clamps X within map bounds
+
+        float targetY = player.getBounds().y + (player.getBounds().height / 2); 
+        camera.position.y += (targetY - camera.position.y) * 5.0f * delta; // Follows the player smoothly
+        camera.position.y = Math.max(WORLD_HEIGHT / 2 + buffer, Math.min(camera.position.y, mapHeightInPixels - WORLD_HEIGHT / 2 - buffer)); // Clamps Y within map bounds
+        camera.update(); // Updates the camera
 
         mapRenderer.setView(camera);
         mapRenderer.render();
 
-        batch.setProjectionMatrix(camera.combined);
-        batch.begin();
+        batch.setProjectionMatrix(camera.combined); // Sets the projection matrix to camera.combined? meaning it will draw the sprites in the camera's view
+        batch.begin(); // Begins the sprite batch
         for (Rectangle s : mapSouls) {
             batch.draw(game.assets.soulTexture, s.x, s.y, s.width, s.height);
         }
@@ -260,29 +267,29 @@ public class PlayScreen extends BaseScreen {
 
     private boolean checkMapCollision(Rectangle rect) {
         for (MapObject object : mapBlocks) {
-            Rectangle blockRect = null;
-            if (object instanceof RectangleMapObject) {
+            Rectangle blockRect = null; // Checks the type of map object and gets the rectangle 
+            if (object instanceof RectangleMapObject) { // If the map object is a rectangle
                 blockRect = ((RectangleMapObject) object).getRectangle();
-            } else if (object instanceof PolygonMapObject) {
+            } else if (object instanceof PolygonMapObject) { // If the map object is a polygon
                 blockRect = ((PolygonMapObject) object).getPolygon().getBoundingRectangle();
             }
 
-            if (blockRect != null) {
+            if (blockRect != null) { // Checks if the block rectangle overlaps with the given rectangle 
                 Rectangle scaledRect = new Rectangle(
-                    blockRect.x * 2.5f, blockRect.y * 2.5f,
-                    blockRect.width * 2.5f, blockRect.height * 2.5f
-                );
-                if (rect.overlaps(scaledRect)) {
-                    return true;
+                    blockRect.x * SCALE_FACTOR, blockRect.y * SCALE_FACTOR,
+                    blockRect.width * SCALE_FACTOR, blockRect.height * SCALE_FACTOR
+                ); // Scale the block rectangle to match the game world
+                if (rect.overlaps(scaledRect)) { // Checks if the given rectangle overlaps with the block rectangle
+                    return true; // Returns true if there is a collision
                 }
             }
         }
-        return false;
+        return false; // Returns false if there is no collision
     }
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        viewport.update(width, height, true); // Updates the viewport with the new width and height
     }
 
     @Override
