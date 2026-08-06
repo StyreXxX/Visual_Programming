@@ -1,4 +1,4 @@
-package com.greenguardian.game;
+package com.greenguardian.game.entities;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
@@ -10,45 +10,34 @@ import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.objects.PolygonMapObject;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.math.Rectangle;
+import com.greenguardian.game.assets.AssetLoader;
 
-public class Boss {
-    private Texture walkSheet, attackSheet, specialAttackSheet, dashSheet, deathSheet;
-    private Texture chargeSheet;
-    private Animation<TextureRegion> walkAnim, attackAnim, specialAttackAnim, dashAnim, deathAnim;
-    private Animation<TextureRegion> chargeAnim;
-    private TextureRegion idleFrame;
-    public Rectangle bounds;
-    private float stateTime;
+public class Boss extends Entity {
+    private Texture specialAttackSheet, dashSheet, chargeSheet;
+    private Animation<TextureRegion> specialAttackAnim, dashAnim, chargeAnim;
 
-    public boolean isDead = false;
     public boolean isAwake = false;
-    private boolean isAttacking = false;
     private boolean isSpecialAttacking = false;
     private boolean isDashing = false;
     private boolean isCharging = false;
-    private boolean facingRight = false;
 
-    // --- Physics & Action Variables ---
-    private float velocityY = 0;
-    private final float GRAVITY = -1500f;
     private final float BASE_JUMP_SPEED = 700f;
     private float dashTime = 0f;
     private float dashSpeed = 500f;
 
-    private float patrolMinX = 500f;
-    private float patrolMaxX = 900f;
+    private float patrolMinX;
+    private float patrolMaxX;
     private float baseSpeed = 100f;
 
-    public int maxHealth = 40;
-    public int health = 40;
+    public Boss(float startX, float startY, AssetLoader assets) {
+        super(startX, startY, 60, 120, 40);
 
-    public Boss(float startX, float startY) {
-        walkSheet = new Texture(Gdx.files.internal("EnemyWalking.png"));
-        attackSheet = new Texture(Gdx.files.internal("EnemyAttack.png"));
-        specialAttackSheet = new Texture(Gdx.files.internal("FirstBossAttack.png"));
-        dashSheet = new Texture(Gdx.files.internal("bossDash.png"));
-        deathSheet = new Texture(Gdx.files.internal("EnemyDeath.png"));
-        chargeSheet = new Texture(Gdx.files.internal("bossCharge.png"));
+        walkSheet = assets.bossWalkSheet;
+        attackSheet = assets.bossAttackSheet;
+        specialAttackSheet = assets.bossSpecialAttackSheet;
+        dashSheet = assets.bossDashSheet;
+        deathSheet = assets.bossDeathSheet;
+        chargeSheet = assets.bossChargeSheet;
 
         walkAnim = createAnimation(walkSheet, 4, 0.2f);
         attackAnim = createAnimation(attackSheet, 4, 0.15f);
@@ -58,19 +47,9 @@ public class Boss {
         chargeAnim = createAnimation(chargeSheet, 4, 0.15f);
 
         idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
-        bounds = new Rectangle(startX, startY, 60, 120);
 
         patrolMinX = startX - 200f;
         patrolMaxX = startX + 200f;
-    }
-
-    private Animation<TextureRegion> createAnimation(Texture sheet, int frameCount, float frameDuration) {
-        TextureRegion[][] tmp = TextureRegion.split(sheet, sheet.getWidth() / frameCount, sheet.getHeight());
-        TextureRegion[] frames = new TextureRegion[frameCount];
-        for (int i = 0; i < frameCount; i++) {
-            frames[i] = tmp[0][i];
-        }
-        return new Animation<>(frameDuration, frames);
     }
 
     public void update(float delta, Player player, MapObjects blocks) {
@@ -86,7 +65,7 @@ public class Boss {
                 velocityY = 0;
             }
 
-            float distanceToPlayer = Math.abs(player.bounds.x - bounds.x);
+            float distanceToPlayer = Math.abs(player.getBounds().x - bounds.x);
 
             if (!isAwake) {
                 if (distanceToPlayer < 600) {
@@ -99,32 +78,28 @@ public class Boss {
             stateTime += delta;
             float oldX = bounds.x;
 
-            // --- PHASE SYSTEM VARIABLES ---
             float currentSpeed = baseSpeed;
             float currentJumpSpeed = BASE_JUMP_SPEED;
             float jumpProbability = 0.01f;
             float teleportProbability = 0f;
 
             if (health <= maxHealth * 0.2f) {
-                // PHASE 3 (Below 20%): Hyper aggressive, frequent teleports
                 currentSpeed = baseSpeed * 2.2f;
                 currentJumpSpeed = BASE_JUMP_SPEED + 150f;
                 jumpProbability = 0.05f;
                 teleportProbability = 0.015f;
             } else if (health <= maxHealth * 0.5f) {
-                // PHASE 2 (Below 50%): Faster, frequent jumps, rare teleports
                 currentSpeed = baseSpeed * 1.6f;
                 currentJumpSpeed = BASE_JUMP_SPEED + 100f;
                 jumpProbability = 0.03f;
                 teleportProbability = 0.003f;
             }
 
-            // --- EXECUTE STATES ---
             if (isCharging) {
                 bounds.x += (facingRight ? 600f : -600f) * delta;
                 if (chargeAnim.isAnimationFinished(stateTime)) {
                     isCharging = false;
-                } else if (bounds.overlaps(player.bounds) && !player.isDead) {
+                } else if (bounds.overlaps(player.getBounds()) && !player.isDead()) {
                     player.takeDamage(3);
                     isCharging = false;
                 }
@@ -133,7 +108,7 @@ public class Boss {
                 dashTime += delta;
                 bounds.x += (facingRight ? dashSpeed : -dashSpeed) * delta;
 
-                if (bounds.overlaps(player.bounds) && !player.isDead) {
+                if (bounds.overlaps(player.getBounds()) && !player.isDead()) {
                     player.takeDamage(1);
                     isDashing = false;
                 }
@@ -142,23 +117,21 @@ public class Boss {
                 }
             }
             else if (isGrounded && !isAttacking && !isSpecialAttacking) {
-                if (player.isDead) {
+                if (player.isDead()) {
                     patrol(delta, currentSpeed);
                 } else {
                     Rectangle attackReach = new Rectangle(bounds.x - 30, bounds.y, bounds.width + 60, bounds.height);
 
-                    // 1. Check for Teleport
                     if (teleportProbability > 0 && Math.random() < teleportProbability) {
                         float teleportOffset = (Math.random() > 0.5) ? 80f : -80f;
-                        bounds.x = player.bounds.x + teleportOffset;
-                        bounds.y = player.bounds.y + 20f; // Drop in slightly above
-                        facingRight = player.bounds.x > bounds.x;
-                        velocityY = -100f; // Snap downward slightly
+                        bounds.x = player.getBounds().x + teleportOffset;
+                        bounds.y = player.getBounds().y + 20f;
+                        facingRight = player.getBounds().x > bounds.x;
+                        velocityY = -100f;
                         stateTime = 0;
                     }
-                    // 2. Standard Attack Range
-                    else if (attackReach.overlaps(player.bounds)) {
-                        facingRight = player.bounds.x > bounds.x;
+                    else if (attackReach.overlaps(player.getBounds())) {
+                        facingRight = player.getBounds().x > bounds.x;
                         if (Math.random() < 0.3) {
                             isSpecialAttacking = true;
                         } else {
@@ -167,19 +140,16 @@ public class Boss {
                         stateTime = 0;
                     }
                     else if (distanceToPlayer < 400) {
-                        facingRight = player.bounds.x > bounds.x;
+                        facingRight = player.getBounds().x > bounds.x;
 
-                        // 3. Long Range Charge
                         if (distanceToPlayer > 300 && Math.random() < 0.02) {
                             isCharging = true;
                             stateTime = 0;
                         }
-                        // 4. Mid Range Dash
                         else if (distanceToPlayer > 200 && Math.random() < 0.02) {
                             isDashing = true;
                             dashTime = 0;
                         }
-                        // 5. Jump or March
                         else if (distanceToPlayer <= 200 && Math.random() < jumpProbability) {
                             velocityY = currentJumpSpeed;
                         }
@@ -209,7 +179,7 @@ public class Boss {
             if (isAttacking && attackAnim.isAnimationFinished(stateTime)) {
                 stateTime = 0;
                 Rectangle attackReach = new Rectangle(bounds.x - 30, bounds.y, bounds.width + 60, bounds.height);
-                if (attackReach.overlaps(player.bounds) && !player.isDead) {
+                if (attackReach.overlaps(player.getBounds()) && !player.isDead()) {
                     player.takeDamage(1);
                 }
                 isAttacking = false;
@@ -217,7 +187,7 @@ public class Boss {
             else if (isSpecialAttacking && specialAttackAnim.isAnimationFinished(stateTime)) {
                 stateTime = 0;
                 Rectangle attackReach = new Rectangle(bounds.x - 30, bounds.y, bounds.width + 60, bounds.height);
-                if (attackReach.overlaps(player.bounds) && !player.isDead) {
+                if (attackReach.overlaps(player.getBounds()) && !player.isDead()) {
                     player.takeDamage(2);
                 }
                 isSpecialAttacking = false;
@@ -237,55 +207,7 @@ public class Boss {
         }
     }
 
-    private boolean checkCollision(Rectangle characterBounds, MapObjects blocks) {
-        for (MapObject object : blocks) {
-            Rectangle rect = null;
-
-            if (object instanceof RectangleMapObject) {
-                rect = ((RectangleMapObject) object).getRectangle();
-                Rectangle scaledRect = new Rectangle(
-                    rect.x * 2.5f, rect.y * 2.5f,
-                    rect.width * 2.5f, rect.height * 2.5f
-                );
-
-                if (characterBounds.overlaps(scaledRect)) {
-                    return true;
-                }
-            } else if (object instanceof PolygonMapObject) {
-                com.badlogic.gdx.math.Polygon polygon = ((PolygonMapObject) object).getPolygon();
-                float[] vertices = polygon.getTransformedVertices();
-                float[] scaledVertices = new float[vertices.length];
-                for (int i = 0; i < vertices.length; i++) {
-                    scaledVertices[i] = vertices[i] * 2.5f;
-                }
-                com.badlogic.gdx.math.Polygon scaledPolygon = new com.badlogic.gdx.math.Polygon(scaledVertices);
-                
-                com.badlogic.gdx.math.Polygon charPoly = new com.badlogic.gdx.math.Polygon(new float[] {
-                    characterBounds.x, characterBounds.y,
-                    characterBounds.x + characterBounds.width, characterBounds.y,
-                    characterBounds.x + characterBounds.width, characterBounds.y + characterBounds.height,
-                    characterBounds.x, characterBounds.y + characterBounds.height
-                });
-                
-                if (com.badlogic.gdx.math.Intersector.overlapConvexPolygons(charPoly, scaledPolygon)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public void takeDamage(int amount) {
-        if (!isDead) {
-            health -= amount;
-            if (health <= 0) {
-                isDead = true;
-                health = 0;
-                stateTime = 0;
-            }
-        }
-    }
-
+    @Override
     public void draw(SpriteBatch batch) {
         TextureRegion currentFrame = idleFrame;
 
@@ -307,25 +229,16 @@ public class Boss {
             currentFrame = walkAnim.getKeyFrame(stateTime, true);
         }
 
-        // Center the 180x180 sprite over the 60x120 hitbox
         float drawX = bounds.x + (bounds.width / 2f) - (180f / 2f);
         drawFlipped(batch, currentFrame, drawX, bounds.y, 180, 180, facingRight);
     }
 
-    private void drawFlipped(SpriteBatch batch, TextureRegion region, float x, float y, float width, float height, boolean faceRight) {
-        if (faceRight) {
-            batch.draw(region, x, y, width, height);
-        } else {
-            batch.draw(region, x + width, y, -width, height);
-        }
-    }
-
+    @Override
     public void dispose() {
-        walkSheet.dispose();
-        attackSheet.dispose();
-        specialAttackSheet.dispose();
-        dashSheet.dispose();
-        deathSheet.dispose();
-        chargeSheet.dispose();
+        // Textures managed by AssetLoader
+    }
+    
+    public boolean isAwake() {
+        return isAwake;
     }
 }

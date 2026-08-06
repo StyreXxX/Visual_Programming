@@ -1,4 +1,4 @@
-package com.greenguardian.game;
+package com.greenguardian.game.entities;
 
 import com.badlogic.gdx.math.Rectangle;
 
