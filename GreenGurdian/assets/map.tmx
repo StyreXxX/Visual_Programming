@@ -4,7 +4,7 @@
   <image source="tile.EdenPlatforms.png" width="256" height="256"/>
  </tileset>
  <imagelayer id="2" name="Background" offsetx="16.3832" offsety="-13.5747" repeatx="1">
-  <image source="C:/Users/LOQ/Downloads/EdenPlatforms.BG.png" width="928" height="331"/>
+  <image source="EdenPlatforms.BG.png" width="928" height="331"/>
  </imagelayer>
  <layer id="1" name="MainTerrain" width="400" height="20">
   <data encoding="csv">

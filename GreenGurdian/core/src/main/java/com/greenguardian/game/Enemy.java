@@ -26,7 +26,7 @@ public class Enemy {
 
     // --- Patrol Variables ---
     private float startX;
-    private float patrolRange = 100f; // Very limited walking distance
+    private float patrolRange = 100f;
     private float speed = 50f;
 
     private float velocityY = 0;
@@ -48,7 +48,7 @@ public class Enemy {
         deathAnim = createAnimation(deathSheet, 4, 0.2f);
 
         idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
-        bounds = new Rectangle(startX, startY, 60, 60);
+        bounds = new Rectangle(startX, startY, 30, 60);
     }
 
     private Animation<TextureRegion> createAnimation(Texture sheet, int frameCount, float frameDuration) {
@@ -112,16 +112,35 @@ public class Enemy {
 
     private boolean checkCollision(Rectangle characterBounds, MapObjects blocks) {
         for (MapObject object : blocks) {
-            Rectangle rect = null;
             if (object instanceof RectangleMapObject) {
-                rect = ((RectangleMapObject) object).getRectangle();
-            } else if (object instanceof PolygonMapObject) {
-                rect = ((PolygonMapObject) object).getPolygon().getBoundingRectangle();
-            }
+                Rectangle rect = ((RectangleMapObject) object).getRectangle();
+                Rectangle scaledRect = new Rectangle(
+                    rect.x * 2.5f, rect.y * 2.5f,
+                    rect.width * 2.5f, rect.height * 2.5f
+                );
 
-            if (rect != null) {
-                Rectangle scaledRect = new Rectangle(rect.x * 2.5f, rect.y * 2.5f, rect.width * 2.5f, rect.height * 2.5f);
-                if (characterBounds.overlaps(scaledRect)) return true;
+                if (characterBounds.overlaps(scaledRect)) {
+                    return true;
+                }
+            } else if (object instanceof PolygonMapObject) {
+                com.badlogic.gdx.math.Polygon polygon = ((PolygonMapObject) object).getPolygon();
+                float[] vertices = polygon.getTransformedVertices();
+                float[] scaledVertices = new float[vertices.length];
+                for (int i = 0; i < vertices.length; i++) {
+                    scaledVertices[i] = vertices[i] * 2.5f;
+                }
+                com.badlogic.gdx.math.Polygon scaledPolygon = new com.badlogic.gdx.math.Polygon(scaledVertices);
+                
+                com.badlogic.gdx.math.Polygon charPoly = new com.badlogic.gdx.math.Polygon(new float[] {
+                    characterBounds.x, characterBounds.y,
+                    characterBounds.x + characterBounds.width, characterBounds.y,
+                    characterBounds.x + characterBounds.width, characterBounds.y + characterBounds.height,
+                    characterBounds.x, characterBounds.y + characterBounds.height
+                });
+                
+                if (com.badlogic.gdx.math.Intersector.overlapConvexPolygons(charPoly, scaledPolygon)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -147,7 +166,9 @@ public class Enemy {
         } else {
             currentFrame = walkAnim.getKeyFrame(stateTime, true);
         }
-        drawFlipped(batch, currentFrame, bounds.x - 10, bounds.y, 80, 80, facingRight);
+        // Center the 80x80 sprite over the 30x60 hitbox
+        float drawX = bounds.x + (bounds.width / 2f) - (80f / 2f);
+        drawFlipped(batch, currentFrame, drawX, bounds.y, 80, 80, facingRight);
     }
 
     // Renders the tiny floating health bar attached to the enemy's world position

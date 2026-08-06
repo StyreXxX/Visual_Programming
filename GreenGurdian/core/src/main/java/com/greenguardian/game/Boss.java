@@ -58,7 +58,7 @@ public class Boss {
         chargeAnim = createAnimation(chargeSheet, 4, 0.15f);
 
         idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
-        bounds = new Rectangle(startX, startY, 120, 120);
+        bounds = new Rectangle(startX, startY, 60, 120);
 
         patrolMinX = startX - 200f;
         patrolMaxX = startX + 200f;
@@ -199,6 +199,9 @@ public class Boss {
                 if (isCharging) isCharging = false;
 
                 if (!isDashing && !isCharging && !isAttacking && !isSpecialAttacking) {
+                    if (isGrounded) {
+                        velocityY = currentJumpSpeed;
+                    }
                     facingRight = !facingRight;
                 }
             }
@@ -240,17 +243,31 @@ public class Boss {
 
             if (object instanceof RectangleMapObject) {
                 rect = ((RectangleMapObject) object).getRectangle();
-            } else if (object instanceof PolygonMapObject) {
-                rect = ((PolygonMapObject) object).getPolygon().getBoundingRectangle();
-            }
-
-            if (rect != null) {
                 Rectangle scaledRect = new Rectangle(
                     rect.x * 2.5f, rect.y * 2.5f,
                     rect.width * 2.5f, rect.height * 2.5f
                 );
 
                 if (characterBounds.overlaps(scaledRect)) {
+                    return true;
+                }
+            } else if (object instanceof PolygonMapObject) {
+                com.badlogic.gdx.math.Polygon polygon = ((PolygonMapObject) object).getPolygon();
+                float[] vertices = polygon.getTransformedVertices();
+                float[] scaledVertices = new float[vertices.length];
+                for (int i = 0; i < vertices.length; i++) {
+                    scaledVertices[i] = vertices[i] * 2.5f;
+                }
+                com.badlogic.gdx.math.Polygon scaledPolygon = new com.badlogic.gdx.math.Polygon(scaledVertices);
+                
+                com.badlogic.gdx.math.Polygon charPoly = new com.badlogic.gdx.math.Polygon(new float[] {
+                    characterBounds.x, characterBounds.y,
+                    characterBounds.x + characterBounds.width, characterBounds.y,
+                    characterBounds.x + characterBounds.width, characterBounds.y + characterBounds.height,
+                    characterBounds.x, characterBounds.y + characterBounds.height
+                });
+                
+                if (com.badlogic.gdx.math.Intersector.overlapConvexPolygons(charPoly, scaledPolygon)) {
                     return true;
                 }
             }
@@ -290,7 +307,9 @@ public class Boss {
             currentFrame = walkAnim.getKeyFrame(stateTime, true);
         }
 
-        drawFlipped(batch, currentFrame, bounds.x - 30, bounds.y, 180, 180, facingRight);
+        // Center the 180x180 sprite over the 60x120 hitbox
+        float drawX = bounds.x + (bounds.width / 2f) - (180f / 2f);
+        drawFlipped(batch, currentFrame, drawX, bounds.y, 180, 180, facingRight);
     }
 
     private void drawFlipped(SpriteBatch batch, TextureRegion region, float x, float y, float width, float height, boolean faceRight) {

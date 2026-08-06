@@ -55,7 +55,7 @@ public class Player {
         idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
         staffIdleFrame = new TextureRegion(staffWalkSheet, 0, 0, staffWalkSheet.getWidth() / 4, staffWalkSheet.getHeight());
 
-        bounds = new Rectangle(startX, startY, 64, 64);
+        bounds = new Rectangle(startX, startY, 30, 70);
     }
 
     private Animation<TextureRegion> createAnimation(Texture sheet, int frameCount, float frameDuration) {
@@ -128,17 +128,31 @@ public class Player {
 
             if (object instanceof RectangleMapObject) {
                 rect = ((RectangleMapObject) object).getRectangle();
-            } else if (object instanceof com.badlogic.gdx.maps.objects.PolygonMapObject) {
-                rect = ((com.badlogic.gdx.maps.objects.PolygonMapObject) object).getPolygon().getBoundingRectangle();
-            }
-
-            if (rect != null) {
                 Rectangle scaledRect = new Rectangle(
                     rect.x * 2.5f, rect.y * 2.5f,
                     rect.width * 2.5f, rect.height * 2.5f
                 );
 
                 if (characterBounds.overlaps(scaledRect)) {
+                    return true;
+                }
+            } else if (object instanceof com.badlogic.gdx.maps.objects.PolygonMapObject) {
+                com.badlogic.gdx.math.Polygon polygon = ((com.badlogic.gdx.maps.objects.PolygonMapObject) object).getPolygon();
+                float[] vertices = polygon.getTransformedVertices();
+                float[] scaledVertices = new float[vertices.length];
+                for (int i = 0; i < vertices.length; i++) {
+                    scaledVertices[i] = vertices[i] * 2.5f;
+                }
+                com.badlogic.gdx.math.Polygon scaledPolygon = new com.badlogic.gdx.math.Polygon(scaledVertices);
+                
+                com.badlogic.gdx.math.Polygon charPoly = new com.badlogic.gdx.math.Polygon(new float[] {
+                    characterBounds.x, characterBounds.y,
+                    characterBounds.x + characterBounds.width, characterBounds.y,
+                    characterBounds.x + characterBounds.width, characterBounds.y + characterBounds.height,
+                    characterBounds.x, characterBounds.y + characterBounds.height
+                });
+                
+                if (com.badlogic.gdx.math.Intersector.overlapConvexPolygons(charPoly, scaledPolygon)) {
                     return true;
                 }
             }
@@ -185,7 +199,7 @@ public class Player {
         float aspect = (float) currentFrame.getRegionWidth() / currentFrame.getRegionHeight();
         float drawWidth = drawHeight * aspect;
 
-        // Center the sprite perfectly over your 64x64 physics hitbox
+        // Center the sprite perfectly over your physics hitbox
         float drawX = bounds.x + (bounds.width / 2f) - (drawWidth / 2f);
 
         drawFlipped(batch, currentFrame, drawX, bounds.y, drawWidth, drawHeight, facingRight);

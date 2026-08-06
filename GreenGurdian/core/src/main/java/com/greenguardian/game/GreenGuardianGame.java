@@ -20,7 +20,7 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class GreenGuardianGame extends ApplicationAdapter {
@@ -61,6 +61,8 @@ public class GreenGuardianGame extends ApplicationAdapter {
     private final int STAFF_COST = 150;
 
     // --- State Flags ---
+    private gameScreenManager screenManager;
+    private int menuIndex = 0;
     private boolean isGameOver = false;
     private boolean isShopOpen = false;
     private String shopMessage = "";
@@ -72,6 +74,7 @@ public class GreenGuardianGame extends ApplicationAdapter {
 
     @Override
     public void create() {
+        screenManager = new gameScreenManager();
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
 
@@ -79,12 +82,12 @@ public class GreenGuardianGame extends ApplicationAdapter {
         font.getData().setScale(1.8f);
 
         camera = new OrthographicCamera();
-        viewport = new FitViewport(1280, 720, camera);
+        viewport = new StretchViewport(1280, 720, camera);
 
         hudCamera = new OrthographicCamera();
-        hudViewport = new FitViewport(1280, 720, hudCamera);
+        hudViewport = new StretchViewport(1280, 720, hudCamera);
 
-        map = new TmxMapLoader().load("map.tmx");
+        map = new TmxMapLoader().load("copy.tmx");
         mapRenderer = new OrthogonalTiledMapRenderer(map, 2.5f);
         mapBlocks = map.getLayers().get("blocks").getObjects();
 
@@ -179,6 +182,14 @@ public class GreenGuardianGame extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         float delta = Gdx.graphics.getDeltaTime();
+
+        if (screenManager.getCurrentState() == gameScreenManager.GameState.START) {
+            renderStartScreen();
+            return;
+        } else if (screenManager.getCurrentState() == gameScreenManager.GameState.MENU) {
+            renderMenuScreen();
+            return;
+        }
 
         // --- INPUT & UPDATE HANDLING ---
         if (Gdx.input.isKeyJustPressed(Input.Keys.B) && !isGameOver && !boss.isDead) {
@@ -341,6 +352,50 @@ public class GreenGuardianGame extends ApplicationAdapter {
             font.draw(batch, "VICTORY ACHIEVED!", 500, 430);
             font.setColor(Color.WHITE);
             font.draw(batch, "Next Level", 575, 328);
+        }
+        batch.end();
+    }
+
+    private void renderStartScreen() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY) || Gdx.input.justTouched()) {
+            screenManager.setScreen(gameScreenManager.GameState.MENU);
+        }
+        
+        batch.setProjectionMatrix(hudCamera.combined);
+        batch.begin();
+        font.setColor(Color.WHITE);
+        font.draw(batch, "PRESS ANY KEY TO START", 470, 360);
+        batch.end();
+    }
+
+    private void renderMenuScreen() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
+            menuIndex = 0;
+        } else if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
+            menuIndex = 1;
+        } else if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            if (menuIndex == 0) {
+                screenManager.setScreen(gameScreenManager.GameState.PLAY);
+            } else {
+                Gdx.app.exit();
+            }
+        }
+        
+        batch.setProjectionMatrix(hudCamera.combined);
+        batch.begin();
+        font.setColor(Color.GOLD);
+        font.draw(batch, "GREEN GUARDIAN", 520, 460);
+        
+        if (menuIndex == 0) {
+            font.setColor(Color.GREEN);
+            font.draw(batch, "> START <", 560, 360);
+            font.setColor(Color.WHITE);
+            font.draw(batch, "  QUIT", 560, 310);
+        } else {
+            font.setColor(Color.WHITE);
+            font.draw(batch, "  START", 560, 360);
+            font.setColor(Color.RED);
+            font.draw(batch, "> QUIT <", 560, 310);
         }
         batch.end();
     }
