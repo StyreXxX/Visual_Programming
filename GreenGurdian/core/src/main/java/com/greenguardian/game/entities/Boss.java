@@ -17,6 +17,8 @@ public class Boss extends Entity {
     private boolean isDashing = false;
     private boolean isCharging = false;
 
+    private static final int INITIAL_MAX_HEALTH = 40;
+
     private final float BASE_JUMP_SPEED = 700f;
     private float dashTime = 0f;
     private float dashSpeed = 500f;
@@ -26,7 +28,9 @@ public class Boss extends Entity {
     private float baseSpeed = 100f;
 
     public Boss(float startX, float startY, AssetLoader assets) {
-        super(startX, startY, 60, 120, 40);
+        super(startX, startY, 60, 120);
+        this.maxHealth = INITIAL_MAX_HEALTH;
+        this.health = INITIAL_MAX_HEALTH;
 
         walkSheet = assets.bossWalkSheet;
         attackSheet = assets.bossAttackSheet;

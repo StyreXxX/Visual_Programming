@@ -16,8 +16,10 @@ public class AssetLoader {
     public Texture playerWalkSheet;
     public Texture playerAttackSheet;
     public Texture playerDeathSheet;
+    public Texture playerStandSheet;
     public Texture playerStaffWalkSheet;
     public Texture playerStaffAttackSheet;
+    // public Texture playerStaffIdleSheet;
 
     // Boss Textures
     public Texture bossWalkSheet;
@@ -38,9 +40,10 @@ public class AssetLoader {
         staffDisplayTexture = new Texture(Gdx.files.internal("ui/magicStaff.png"));
 
         // Player
-        playerWalkSheet = new Texture(Gdx.files.internal("characters/player/MCWalking.png"));
+        playerWalkSheet = new Texture(Gdx.files.internal("characters/player/MainCharacterWalking.png"));
         playerAttackSheet = new Texture(Gdx.files.internal("characters/player/MainCharacterAttack.png"));
         playerDeathSheet = new Texture(Gdx.files.internal("characters/player/deathanimation.png"));
+        playerStandSheet = new Texture(Gdx.files.internal("characters/player/MainCharacterStanding.png"));
         playerStaffWalkSheet = new Texture(Gdx.files.internal("characters/player/mainCharacterStaffWalking.png"));
         playerStaffAttackSheet = new Texture(Gdx.files.internal("characters/player/mainCharacterStaffAttack.png"));
 
@@ -80,6 +83,7 @@ public class AssetLoader {
         if (playerWalkSheet != null) playerWalkSheet.dispose();
         if (playerAttackSheet != null) playerAttackSheet.dispose();
         if (playerDeathSheet != null) playerDeathSheet.dispose();
+        if (playerStandSheet != null) playerStandSheet.dispose();
         if (playerStaffWalkSheet != null) playerStaffWalkSheet.dispose();
         if (playerStaffAttackSheet != null) playerStaffAttackSheet.dispose();
 

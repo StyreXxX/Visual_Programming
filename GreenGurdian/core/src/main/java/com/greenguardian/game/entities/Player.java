@@ -13,19 +13,23 @@ import com.greenguardian.game.assets.AssetLoader;
 public class Player extends Entity {
     private Texture staffWalkSheet, staffAttackSheet;
     private Animation<TextureRegion> staffWalkAnim, staffAttackAnim;
-    private TextureRegion staffIdleFrame;
+    // private TextureRegion staffIdleFrame;
 
     private boolean hasStaff = false;
 
-    private final float JUMP_SPEED = 900f;
-    private final float PLAYER_SPEED = 550f;
+    private final float JUMP_SPEED = 875f;
+    private final float PLAYER_SPEED = 315f;
+    private static final int INITIAL_MAX_HEALTH = 10;
 
     public Player(float startX, float startY, AssetLoader assets) {
-        super(startX, startY, 30, 70, 10);
+        super(startX, startY, 30, 70);
+        this.maxHealth = INITIAL_MAX_HEALTH;
+        this.health = INITIAL_MAX_HEALTH;
 
         walkSheet = assets.playerWalkSheet;
         attackSheet = assets.playerAttackSheet;
         deathSheet = assets.playerDeathSheet;
+        standSheet = assets.playerStandSheet;
 
         staffWalkSheet = assets.playerStaffWalkSheet;
         staffAttackSheet = assets.playerStaffAttackSheet;
@@ -37,8 +41,8 @@ public class Player extends Entity {
         staffWalkAnim = createAnimation(staffWalkSheet, 4, 0.15f);
         staffAttackAnim = createAnimation(staffAttackSheet, 3, 0.1f);
 
-        idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
-        staffIdleFrame = new TextureRegion(staffWalkSheet, 0, 0, staffWalkSheet.getWidth() / 4, staffWalkSheet.getHeight());
+        idleFrame = new TextureRegion(standSheet);
+        // staffIdleFrame = new TextureRegion(staffWalkSheet, 0, 0, staffWalkSheet.getWidth() / 4, staffWalkSheet.getHeight());
     }
 
     public void equipStaff() {
@@ -110,7 +114,7 @@ public class Player extends Entity {
 
     @Override
     public void draw(SpriteBatch batch) {
-        TextureRegion currentFrame = hasStaff ? staffIdleFrame : idleFrame;
+        TextureRegion currentFrame = idleFrame;
 
         if (isDead) {
             currentFrame = deathAnim.getKeyFrame(stateTime, false);
@@ -132,6 +136,6 @@ public class Player extends Entity {
 
     @Override
     public void dispose() {
-        // Textures are managed by AssetLoader now
+        // Textures are managed by AssetLoader
     }
 }

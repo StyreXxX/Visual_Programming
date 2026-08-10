@@ -9,12 +9,16 @@ import com.badlogic.gdx.math.Rectangle;
 import com.greenguardian.game.assets.AssetLoader;
 
 public class Enemy extends Entity {
+    private static final int INITIAL_MAX_HEALTH = 3;
+
     private float startX;
     private float patrolRange = 100f;
     private float speed = 50f;
 
     public Enemy(float startX, float startY, AssetLoader assets) {
-        super(startX, startY, 30, 60, 3);
+        super(startX, startY, 30, 70);
+        this.maxHealth = INITIAL_MAX_HEALTH;
+        this.health = INITIAL_MAX_HEALTH;
         this.startX = startX;
 
         walkSheet = assets.enemyWalkSheet;
@@ -27,6 +31,10 @@ public class Enemy extends Entity {
 
         idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
     }
+
+    // public boolean playerInRange(Player player) {
+    //     return (getBounds().x + 100 > player.getBounds().x || getBounds().x - 100 < player.getBounds().x);
+    // }
 
     public void update(float delta, Player player, MapObjects blocks) {
         if (!isDead) {
@@ -85,8 +93,12 @@ public class Enemy extends Entity {
         } else {
             currentFrame = walkAnim.getKeyFrame(stateTime, true);
         }
-        float drawX = bounds.x + (bounds.width / 2f) - (80f / 2f);
-        drawFlipped(batch, currentFrame, drawX, bounds.y, 80, 80, facingRight);
+        float drawHeight = 100f;
+        float aspect = (float) currentFrame.getRegionWidth() / currentFrame.getRegionHeight();
+        float drawWidth = drawHeight * aspect;
+        float drawX = bounds.x + (bounds.width / 2f) - (drawWidth / 2f);
+
+        drawFlipped(batch, currentFrame, drawX, bounds.y, drawWidth, drawHeight, facingRight);
     }
 
     public void drawFloatingHealth(ShapeRenderer shapeRenderer) {

@@ -13,7 +13,7 @@ import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
 
 public abstract class Entity {
-    protected Texture walkSheet, attackSheet, deathSheet;
+    protected Texture walkSheet, attackSheet, deathSheet, standSheet;
     protected Animation<TextureRegion> walkAnim, attackAnim, deathAnim;
     protected TextureRegion idleFrame;
 
@@ -30,10 +30,8 @@ public abstract class Entity {
     protected int maxHealth;
     protected int health;
 
-    public Entity(float startX, float startY, float width, float height, int maxHealth) {
+    public Entity(float startX, float startY, float width, float height) {
         this.bounds = new Rectangle(startX, startY, width, height);
-        this.maxHealth = maxHealth;
-        this.health = maxHealth;
     }
 
     protected Animation<TextureRegion> createAnimation(Texture sheet, int frameCount, float frameDuration) {

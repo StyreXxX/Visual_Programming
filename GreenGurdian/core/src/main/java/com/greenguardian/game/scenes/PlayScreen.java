@@ -167,11 +167,11 @@ public class PlayScreen extends BaseScreen {
         float mapHeightInPixels = map.getProperties().get("height", Integer.class) * map.getProperties().get("tileheight", Integer.class) * SCALE_FACTOR;
 
         float targetX = player.getBounds().x + (player.getBounds().width / 2);
-        camera.position.x += (targetX - camera.position.x) * 5.0f * delta; // Follows the player smoothly   
+        camera.position.x += (targetX - camera.position.x) * 5.0f * delta; // Follows the player    
         camera.position.x = Math.max(WORLD_WIDTH / 2 + buffer, Math.min(camera.position.x, mapWidthInPixels - WORLD_WIDTH / 2 - buffer)); // Clamps X within map bounds
 
         float targetY = player.getBounds().y + (player.getBounds().height / 2); 
-        camera.position.y += (targetY - camera.position.y) * 5.0f * delta; // Follows the player smoothly
+        camera.position.y += (targetY - camera.position.y) * 5.0f * delta; // Follows the player 
         camera.position.y = Math.max(WORLD_HEIGHT / 2 + buffer, Math.min(camera.position.y, mapHeightInPixels - WORLD_HEIGHT / 2 - buffer)); // Clamps Y within map bounds
         camera.update(); // Updates the camera
 
