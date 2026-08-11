@@ -32,17 +32,17 @@ public class Enemy extends Entity {
         idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
     }
 
-    // public boolean playerInRange(Player player) {
-    //     return (getBounds().x + 100 > player.getBounds().x || getBounds().x - 100 < player.getBounds().x);
-    // }
+    public boolean playerInRange(Player player) {
+        return (getBounds().x + 100 > player.getBounds().x || getBounds().x - 100 < player.getBounds().x);
+    }
 
-    public void update(float delta, Player player, MapObjects blocks) {
+    public void update(float delta, Player player, MapObjects blocks, float scale) {
         if (!isDead) {
             float oldY = bounds.y;
             velocityY += GRAVITY * delta;
             bounds.y += velocityY * delta;
 
-            if (checkCollision(bounds, blocks)) {
+            if (checkCollision(bounds, blocks, scale)) {
                 bounds.y = oldY;
                 velocityY = 0;
             }
@@ -56,7 +56,7 @@ public class Enemy extends Entity {
                 stateTime = 0;
                 facingRight = player.getBounds().x > bounds.x;
             }
-
+            
             if (isAttacking) {
                 if (attackAnim.isAnimationFinished(stateTime)) {
                     isAttacking = false;
@@ -73,7 +73,7 @@ public class Enemy extends Entity {
                     if (bounds.x < startX - patrolRange) facingRight = true;
                 }
 
-                if (checkCollision(bounds, blocks)) {
+                if (checkCollision(bounds, blocks, scale)) {
                     bounds.x = oldX;
                     facingRight = !facingRight;
                 }

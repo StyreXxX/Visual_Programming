@@ -52,14 +52,14 @@ public class Boss extends Entity {
         patrolMaxX = startX + 200f;
     }
 
-    public void update(float delta, Player player, MapObjects blocks) {
+    public void update(float delta, Player player, MapObjects blocks, float scale) {
         if (!isDead) {
             float oldY = bounds.y;
             velocityY += GRAVITY * delta;
             bounds.y += velocityY * delta;
 
             boolean isGrounded = false;
-            if (checkCollision(bounds, blocks)) {
+            if (checkCollision(bounds, blocks, scale)) {
                 bounds.y = oldY;
                 if (velocityY < 0) isGrounded = true;
                 velocityY = 0;
@@ -163,7 +163,7 @@ public class Boss extends Entity {
                 }
             }
 
-            if (checkCollision(bounds, blocks)) {
+            if (checkCollision(bounds, blocks, scale)) {
                 bounds.x = oldX;
                 if (isDashing) isDashing = false;
                 if (isCharging) isCharging = false;

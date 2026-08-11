@@ -30,6 +30,11 @@ public abstract class Entity {
     protected int maxHealth;
     protected int health;
 
+    private static final Rectangle tmpRect = new Rectangle();
+    private static final Polygon tmpPolygon = new Polygon();
+    private static final Polygon charPoly = new Polygon(new float[8]);
+    private static float[] tmpVertices = new float[0];
+
     public Entity(float startX, float startY, float width, float height) {
         this.bounds = new Rectangle(startX, startY, width, height);
     }
@@ -62,35 +67,43 @@ public abstract class Entity {
         }
     }
 
-    protected boolean checkCollision(Rectangle characterBounds, MapObjects blocks) {
+    protected boolean checkCollision(Rectangle characterBounds, MapObjects blocks, float scale) {
         for (MapObject object : blocks) {
             if (object instanceof RectangleMapObject) {
                 Rectangle rect = ((RectangleMapObject) object).getRectangle();
-                Rectangle scaledRect = new Rectangle(
-                    rect.x * 2.5f, rect.y * 2.5f,
-                    rect.width * 2.5f, rect.height * 2.5f
+                tmpRect.set(
+                    rect.x * scale, rect.y * scale,
+                    rect.width * scale, rect.height * scale
                 );
 
-                if (characterBounds.overlaps(scaledRect)) {
+                if (characterBounds.overlaps(tmpRect)) {
                     return true;
                 }
             } else if (object instanceof PolygonMapObject) {
                 Polygon polygon = ((PolygonMapObject) object).getPolygon();
                 float[] vertices = polygon.getTransformedVertices();
-                float[] scaledVertices = new float[vertices.length];
-                for (int i = 0; i < vertices.length; i++) {
-                    scaledVertices[i] = vertices[i] * 2.5f;
+                
+                if (tmpVertices.length != vertices.length) {
+                    tmpVertices = new float[vertices.length];
                 }
-                Polygon scaledPolygon = new Polygon(scaledVertices);
                 
-                Polygon charPoly = new Polygon(new float[] {
-                    characterBounds.x, characterBounds.y,
-                    characterBounds.x + characterBounds.width, characterBounds.y,
-                    characterBounds.x + characterBounds.width, characterBounds.y + characterBounds.height,
-                    characterBounds.x, characterBounds.y + characterBounds.height
-                });
+                for (int i = 0; i < vertices.length; i++) {
+                    tmpVertices[i] = vertices[i] * scale;
+                }
+                tmpPolygon.setVertices(tmpVertices);
                 
-                if (Intersector.overlapConvexPolygons(charPoly, scaledPolygon)) {
+                float[] charVertices = charPoly.getVertices();
+                charVertices[0] = characterBounds.x;
+                charVertices[1] = characterBounds.y;
+                charVertices[2] = characterBounds.x + characterBounds.width;
+                charVertices[3] = characterBounds.y;
+                charVertices[4] = characterBounds.x + characterBounds.width;
+                charVertices[5] = characterBounds.y + characterBounds.height;
+                charVertices[6] = characterBounds.x;
+                charVertices[7] = characterBounds.y + characterBounds.height;
+                charPoly.dirty();
+                
+                if (Intersector.overlapConvexPolygons(charPoly, tmpPolygon)) {
                     return true;
                 }
             }

@@ -53,7 +53,7 @@ public class Player extends Entity {
         return hasStaff;
     }
 
-    public void update(float delta, Array<Projectile> projectiles, MapObjects blocks) {
+    public void update(float delta, Array<Projectile> projectiles, MapObjects blocks, float scale) {
         if (health <= 0 && !isDead) {
             isDead = true;
             stateTime = 0;
@@ -67,7 +67,7 @@ public class Player extends Entity {
         bounds.y += velocityY * delta;
 
         boolean isGrounded = false;
-        if (checkCollision(bounds, blocks)) {
+        if (checkCollision(bounds, blocks, scale)) {
             bounds.y = oldY;
             if (velocityY < 0) isGrounded = true;
             velocityY = 0;
@@ -87,7 +87,7 @@ public class Player extends Entity {
                 facingRight = true;
             }
 
-            if (checkCollision(bounds, blocks)) {
+            if (checkCollision(bounds, blocks, scale)) {
                 bounds.x = oldX;
             }
 

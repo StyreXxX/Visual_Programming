@@ -44,11 +44,13 @@ public class PlayScreen extends BaseScreen {
     private Array<Projectile> projectiles;
     private Array<Rectangle> mapSouls;
 
-    private int playerSouls = 0;
+    private int playerSouls = 140;
     private final int STAFF_COST = 150;
 
-    private boolean isGameOver = false;
-    private boolean isShopOpen = false;
+    public enum GameState {
+        PLAYING, SHOP, GAME_OVER
+    }
+    private GameState gameState = GameState.PLAYING;
     private String shopMessage = "";
 
     private float pStartX = 100f, pStartY = 300f;
@@ -129,8 +131,7 @@ public class PlayScreen extends BaseScreen {
 
         player = new Player(pStartX, pStartY, game.assets);
         boss = new Boss(bStartX, bStartY, game.assets);
-        isGameOver = false;
-        isShopOpen = false;
+        gameState = GameState.PLAYING;
     }
 
     @Override
@@ -138,18 +139,18 @@ public class PlayScreen extends BaseScreen {
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f); // Clears the screen with black color
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); // Clears the color buffer
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.B) && !isGameOver && !boss.isDead()) {
-            isShopOpen = !isShopOpen;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.B) && gameState != GameState.GAME_OVER && !boss.isDead()) {
+            gameState = (gameState == GameState.SHOP) ? GameState.PLAYING : GameState.SHOP;
             shopMessage = "";
         }
 
-        if (!isGameOver && !isShopOpen) {
+        if (gameState == GameState.PLAYING) {
             updateWorld(delta);
-        } else if (isGameOver) {
+        } else if (gameState == GameState.GAME_OVER) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
                 resetGame();
             }
-        } else if (isShopOpen) {
+        } else if (gameState == GameState.SHOP) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
                 if (player.hasStaff()) {
                     shopMessage = "ALREADY OWNED!";
@@ -205,18 +206,18 @@ public class PlayScreen extends BaseScreen {
         hud.drawHealthBars(player, boss);
         shapeRenderer.end();
 
-        hud.drawOverlays(isGameOver, isShopOpen, boss);
+        hud.drawOverlays(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, boss);
 
         batch.setProjectionMatrix(hudCamera.combined);
-        hud.drawTextAndIcons(isGameOver, isShopOpen, boss, playerSouls, STAFF_COST, shopMessage);
+        hud.drawTextAndIcons(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, boss, playerSouls, STAFF_COST, shopMessage);
     }
 
     private void updateWorld(float delta) {
-        player.update(delta, projectiles, mapBlocks);
-        boss.update(delta, player, mapBlocks);
+        player.update(delta, projectiles, mapBlocks, SCALE_FACTOR);
+        boss.update(delta, player, mapBlocks, SCALE_FACTOR);
 
         for (Enemy e : enemies) {
-            e.update(delta, player, mapBlocks);
+            e.update(delta, player, mapBlocks, SCALE_FACTOR);
         }
 
         for (int i = mapSouls.size - 1; i >= 0; i--) {
@@ -228,7 +229,7 @@ public class PlayScreen extends BaseScreen {
         }
 
         if (player.getHealth() <= 0 || player.getBounds().y < -100) {
-            isGameOver = true;
+            gameState = GameState.GAME_OVER;
         }
 
         for (int i = projectiles.size - 1; i >= 0; i--) {
@@ -265,6 +266,8 @@ public class PlayScreen extends BaseScreen {
         }
     }
 
+    private Rectangle tmpBlockRect = new Rectangle();
+
     private boolean checkMapCollision(Rectangle rect) {
         for (MapObject object : mapBlocks) {
             Rectangle blockRect = null; // Checks the type of map object and gets the rectangle 
@@ -275,11 +278,11 @@ public class PlayScreen extends BaseScreen {
             }
 
             if (blockRect != null) { // Checks if the block rectangle overlaps with the given rectangle 
-                Rectangle scaledRect = new Rectangle(
+                tmpBlockRect.set(
                     blockRect.x * SCALE_FACTOR, blockRect.y * SCALE_FACTOR,
                     blockRect.width * SCALE_FACTOR, blockRect.height * SCALE_FACTOR
                 ); // Scale the block rectangle to match the game world
-                if (rect.overlaps(scaledRect)) { // Checks if the given rectangle overlaps with the block rectangle
+                if (rect.overlaps(tmpBlockRect)) { // Checks if the given rectangle overlaps with the block rectangle
                     return true; // Returns true if there is a collision
                 }
             }
