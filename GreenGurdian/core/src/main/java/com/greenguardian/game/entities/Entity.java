@@ -82,16 +82,16 @@ public abstract class Entity {
             } else if (object instanceof PolygonMapObject) {
                 Polygon polygon = ((PolygonMapObject) object).getPolygon();
                 float[] vertices = polygon.getTransformedVertices();
-                
+
                 if (tmpVertices.length != vertices.length) {
                     tmpVertices = new float[vertices.length];
                 }
-                
+
                 for (int i = 0; i < vertices.length; i++) {
                     tmpVertices[i] = vertices[i] * scale;
                 }
                 tmpPolygon.setVertices(tmpVertices);
-                
+
                 float[] charVertices = charPoly.getVertices();
                 charVertices[0] = characterBounds.x;
                 charVertices[1] = characterBounds.y;
@@ -102,7 +102,7 @@ public abstract class Entity {
                 charVertices[6] = characterBounds.x;
                 charVertices[7] = characterBounds.y + characterBounds.height;
                 charPoly.dirty();
-                
+
                 if (Intersector.overlapConvexPolygons(charPoly, tmpPolygon)) {
                     return true;
                 }
@@ -129,5 +129,11 @@ public abstract class Entity {
 
     public int getMaxHealth() {
         return maxHealth;
+    }
+
+    public boolean isAwake() {
+        // By default, assume standard entities (like Player and normal Enemies) are always awake.
+        // The Boss and CentaurBoss classes will automatically override this with their custom aggro logic.
+        return true;
     }
 }

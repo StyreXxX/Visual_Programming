@@ -28,6 +28,11 @@ public class AssetLoader {
     public Texture bossDashSheet;
     public Texture bossDeathSheet;
     public Texture bossChargeSheet;
+    public Texture centaurWalkSheet;
+    public Texture centaurBasicAttackSheet;
+    public Texture centaurSmashAttackSheet;
+    public Texture centaurChargeAttackSheet;
+    public Texture centaurDeathSheet;
 
     // Enemy Textures
     public Texture enemyWalkSheet;
@@ -54,6 +59,12 @@ public class AssetLoader {
         bossDashSheet = new Texture(Gdx.files.internal("characters/boss/bossDash.png"));
         bossDeathSheet = new Texture(Gdx.files.internal("characters/boss/EnemyDeath.png"));
         bossChargeSheet = new Texture(Gdx.files.internal("characters/boss/bossCharge.png"));
+
+        centaurWalkSheet = new Texture(Gdx.files.internal("characters/boss/centaurWalk.png"));
+        centaurBasicAttackSheet = new Texture(Gdx.files.internal("characters/boss/centaurBasicAttack.png"));
+        centaurSmashAttackSheet = new Texture(Gdx.files.internal("characters/boss/centaurSmashAttack.png"));
+        centaurChargeAttackSheet = new Texture(Gdx.files.internal("characters/boss/centaurChargeAttack.png"));
+        centaurDeathSheet = new Texture(Gdx.files.internal("characters/boss/centaurDeath.png"));
 
         // Enemy
         enemyWalkSheet = new Texture(Gdx.files.internal("characters/enemy/normalEnemyWalking.png"));
@@ -93,6 +104,12 @@ public class AssetLoader {
         if (bossDashSheet != null) bossDashSheet.dispose();
         if (bossDeathSheet != null) bossDeathSheet.dispose();
         if (bossChargeSheet != null) bossChargeSheet.dispose();
+
+        if (centaurWalkSheet != null) centaurWalkSheet.dispose();
+        if (centaurBasicAttackSheet != null) centaurBasicAttackSheet.dispose();
+        if (centaurSmashAttackSheet != null) centaurSmashAttackSheet.dispose();
+        if (centaurChargeAttackSheet != null) centaurChargeAttackSheet.dispose();
+        if (centaurDeathSheet != null) centaurDeathSheet.dispose();
 
         if (enemyWalkSheet != null) enemyWalkSheet.dispose();
         if (enemyAttackSheet != null) enemyAttackSheet.dispose();

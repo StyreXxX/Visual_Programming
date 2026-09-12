@@ -16,6 +16,7 @@ public class Player extends Entity {
     // private TextureRegion staffIdleFrame;
 
     private boolean hasStaff = false;
+    private boolean inWater = false;
 
     private final float JUMP_SPEED = 1000f;
     private final float PLAYER_SPEED = 500f;
@@ -53,7 +54,7 @@ public class Player extends Entity {
         return hasStaff;
     }
 
-    public void update(float delta, Array<Projectile> projectiles, MapObjects blocks, float scale) {
+    public void update(float delta, Array<Projectile> projectiles, MapObjects blocks, MapObjects waterZones, float scale) {
         if (health <= 0 && !isDead) {
             isDead = true;
             stateTime = 0;
@@ -73,17 +74,29 @@ public class Player extends Entity {
             velocityY = 0;
         }
 
+        // Check water collision
+        inWater = false;
+        if (waterZones != null) {
+            inWater = checkCollision(bounds, waterZones, scale);
+        }
+
+        // Reduce jump height in water
+        float currentJumpSpeed = inWater ? JUMP_SPEED * 0.6f : JUMP_SPEED;
         if (isGrounded && !isAttacking && (Gdx.input.isKeyJustPressed(Input.Keys.W) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE))) {
-            velocityY = JUMP_SPEED;
+            velocityY = currentJumpSpeed;
         }
 
         float oldX = bounds.x;
+
+        // Reduce movement speed by 60% in water
+        float currentSpeed = inWater ? PLAYER_SPEED * 0.4f : PLAYER_SPEED;
+
         if (!isAttacking) {
             if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-                bounds.x -= PLAYER_SPEED * delta;
+                bounds.x -= currentSpeed * delta;
                 facingRight = false;
             } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-                bounds.x += PLAYER_SPEED * delta;
+                bounds.x += currentSpeed * delta;
                 facingRight = true;
             }
 
@@ -120,18 +133,32 @@ public class Player extends Entity {
             currentFrame = deathAnim.getKeyFrame(stateTime, false);
         } else if (isAttacking) {
             currentFrame = (hasStaff ? staffAttackAnim : attackAnim).getKeyFrame(stateTime, false);
-        } else if (velocityY != 0) {
+        } else if (velocityY != 0 && !inWater) {
             currentFrame = (hasStaff ? staffWalkAnim : walkAnim).getKeyFrame(0);
         } else if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.D)) {
             currentFrame = (hasStaff ? staffWalkAnim : walkAnim).getKeyFrame(stateTime, true);
         }
 
-        float drawHeight = 100f;
+        // Submerge logic: slice the bottom 40% of the sprite
+        float fullDrawHeight = 100f;
+        float drawHeight = inWater ? 60f : fullDrawHeight;
+
+        TextureRegion renderFrame = currentFrame;
+        if (inWater) {
+            // Create a temporary region capturing only the top 60% of the texture
+            renderFrame = new TextureRegion(currentFrame, 0, 0,
+                currentFrame.getRegionWidth(),
+                (int)(currentFrame.getRegionHeight() * 0.6f));
+        }
+
         float aspect = (float) currentFrame.getRegionWidth() / currentFrame.getRegionHeight();
-        float drawWidth = drawHeight * aspect;
+        float drawWidth = fullDrawHeight * aspect;
         float drawX = bounds.x + (bounds.width / 2f) - (drawWidth / 2f);
 
-        drawFlipped(batch, currentFrame, drawX, bounds.y, drawWidth, drawHeight, facingRight);
+        // Shift the Y rendering position up by 40 units to compensate for the missing bottom half
+        float drawY = inWater ? bounds.y + 40f : bounds.y;
+
+        drawFlipped(batch, renderFrame, drawX, drawY, drawWidth, drawHeight, facingRight);
     }
 
     @Override

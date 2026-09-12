@@ -3,8 +3,6 @@ package com.greenguardian.game;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -26,6 +24,9 @@ public class GreenGuardianGame extends Game {
     public Music gameplayMusic;
     public Sound buttonSound;
 
+    // Default volume at 50%
+    public float globalVolume = 0.5f;
+
     @Override
     public void create() {
         batch = new SpriteBatch();
@@ -40,39 +41,43 @@ public class GreenGuardianGame extends Game {
 
         startMusic = Gdx.audio.newMusic(Gdx.files.internal("audio/start-music.mp3"));
         startMusic.setLooping(true);
-        startMusic.setVolume(0.5f);
+        startMusic.setVolume(globalVolume);
 
         gameplayMusic = Gdx.audio.newMusic(Gdx.files.internal("audio/gameplay-music.mp3"));
         gameplayMusic.setLooping(true);
-        gameplayMusic.setVolume(0.5f);
+        gameplayMusic.setVolume(globalVolume);
 
         buttonSound = Gdx.audio.newSound(Gdx.files.internal("audio/button-click-sound.mp3"));
 
         playStartMusic();
-
         setScreen(new StartScreen(this, batch, font, hudCamera));
+    }
+
+    public void setGlobalVolume(float volume) {
+        this.globalVolume = volume;
+        if (startMusic != null) startMusic.setVolume(volume);
+        if (gameplayMusic != null) gameplayMusic.setVolume(volume);
     }
 
     public void playButtonSound() {
         if (buttonSound != null) {
-            buttonSound.play(1.0f);
+            // buttonSound.play() accepts volume as a parameter
+            buttonSound.play(globalVolume);
         }
     }
 
     public void playStartMusic() {
-        if (gameplayMusic.isPlaying()) {
-            gameplayMusic.stop();
-        }
+        if (gameplayMusic.isPlaying()) gameplayMusic.stop();
         if (!startMusic.isPlaying()) {
+            startMusic.setVolume(globalVolume);
             startMusic.play();
         }
     }
 
     public void playGameplayMusic() {
-        if (startMusic.isPlaying()) {
-            startMusic.stop();
-        }
+        if (startMusic.isPlaying()) startMusic.stop();
         if (!gameplayMusic.isPlaying()) {
+            gameplayMusic.setVolume(globalVolume);
             gameplayMusic.play();
         }
     }
