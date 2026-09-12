@@ -58,9 +58,11 @@ public class PlayScreen extends BaseScreen {
     private final float MAX_PROJECTILE_RANGE = 450f;
 
     private HUD hud;
+    private int levelIndex;
 
-    public PlayScreen(GreenGuardianGame game, SpriteBatch batch, BitmapFont font, OrthographicCamera hudCamera) {
+    public PlayScreen(GreenGuardianGame game, SpriteBatch batch, BitmapFont font, OrthographicCamera hudCamera, int levelIndex) {
         super(game, batch, font, hudCamera);
+        this.levelIndex = levelIndex;
         this.shapeRenderer = new ShapeRenderer();
 
         camera = new OrthographicCamera(); // orthographic means no depth needed, it flattens everything to 2d
@@ -68,34 +70,49 @@ public class PlayScreen extends BaseScreen {
         // center of the screen
         camera.position.set(WORLD_WIDTH / 2f, WORLD_HEIGHT / 2f, 0);
 
-        map = new TmxMapLoader().load("maps/copy.tmx"); // load the map
+        String mapPath = (levelIndex == 2) ? "maps/level2/map2.tmx" : "maps/level1/copy.tmx";
+        System.out.println("LOADING LEVEL: " + levelIndex + " WITH MAP: " + mapPath);
+        map = new TmxMapLoader().load(mapPath); // load the map
         mapRenderer = new OrthogonalTiledMapRenderer(map, SCALE_FACTOR); // render the map
-        mapBlocks = map.getLayers().get("blocks").getObjects(); // get the blocks from the map
+        if (map.getLayers().get("blocks") != null) {
+            mapBlocks = map.getLayers().get("blocks").getObjects(); // get the blocks from the map
+        } else if (map.getLayers().get("Object Layer 1") != null) {
+            mapBlocks = map.getLayers().get("Object Layer 1").getObjects();
+        }
 
         enemies = new Array<>();
         mapSouls = new Array<>();
         projectiles = new Array<>();
 
-        if (map.getLayers().get("spawns") != null) {    // check if the map has spawns layer
-            for (MapObject obj : map.getLayers().get("spawns").getObjects()) { // get the spawns from the map
+        MapObjects spawnObjects = null;
+        if (map.getLayers().get("spawns") != null) {
+            spawnObjects = map.getLayers().get("spawns").getObjects();
+        } else if (map.getLayers().get("SpawnPoints") != null) {
+            spawnObjects = map.getLayers().get("SpawnPoints").getObjects();
+        }
+
+        if (spawnObjects != null) {
+            for (MapObject obj : spawnObjects) {
                 if (obj.getName() != null) {
                     float scaledX = (float) obj.getProperties().get("x") * SCALE_FACTOR;
                     float scaledY = (float) obj.getProperties().get("y") * SCALE_FACTOR;
 
-                    if (obj.getName().equalsIgnoreCase("Player")) {
+                    String name = obj.getName().toLowerCase();
+                    if (name.equals("player")) {
                         pStartX = scaledX;
                         pStartY = scaledY;
-                    } else if (obj.getName().equalsIgnoreCase("Boss")) {
+                    } else if (name.equals("boss")) {
                         bStartX = scaledX;
                         bStartY = scaledY;
-                    } else if (obj.getName().equalsIgnoreCase("Enemy")) {
-                        enemies.add(new Enemy(scaledX, scaledY, game.assets)); // add the enemy to the array
-                    } else if (obj.getName().equalsIgnoreCase("Soul")) {
-                        mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE)); // add the soul to the array
+                    } else if (name.startsWith("enemy")) {
+                        enemies.add(new Enemy(scaledX, scaledY, game.assets)); 
+                    } else if (name.equals("soul")) {
+                        mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE));
                     }
                 }
             }
         }
+        System.out.println("SPAWN POSITIONS - Player: (" + pStartX + ", " + pStartY + ") Boss: (" + bStartX + ", " + bStartY + ")");
 
         player = new Player(pStartX, pStartY, game.assets);
         boss = new Boss(bStartX, bStartY, game.assets);
@@ -114,15 +131,23 @@ public class PlayScreen extends BaseScreen {
         mapSouls.clear();
         playerSouls = 0;
 
+        MapObjects spawnObjects = null;
         if (map.getLayers().get("spawns") != null) {
-            for (MapObject obj : map.getLayers().get("spawns").getObjects()) {
+            spawnObjects = map.getLayers().get("spawns").getObjects();
+        } else if (map.getLayers().get("SpawnPoints") != null) {
+            spawnObjects = map.getLayers().get("SpawnPoints").getObjects();
+        }
+
+        if (spawnObjects != null) {
+            for (MapObject obj : spawnObjects) {
                 if (obj.getName() != null) {
                     float scaledX = (float) obj.getProperties().get("x") * SCALE_FACTOR;
                     float scaledY = (float) obj.getProperties().get("y") * SCALE_FACTOR;
 
-                    if (obj.getName().equalsIgnoreCase("Enemy")) {
+                    String name = obj.getName().toLowerCase();
+                    if (name.startsWith("enemy")) {
                         enemies.add(new Enemy(scaledX, scaledY, game.assets));
-                    } else if (obj.getName().equalsIgnoreCase("Soul")) {
+                    } else if (name.equals("soul")) {
                         mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE));
                     }
                 }
@@ -134,10 +159,34 @@ public class PlayScreen extends BaseScreen {
         gameState = GameState.PLAYING;
     }
 
+    private float victoryTime = 0f;
+
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f); // Clears the screen with black color
+        if (levelIndex == 2) {
+            Gdx.gl.glClearColor(0.1f, 0.2f, 0.1f, 1f); // Dark green for swamp
+        } else {
+            Gdx.gl.glClearColor(0.2f, 0.4f, 0.8f, 1); // Blue sky for level 1
+        } // Clears the screen with black color
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); // Clears the color buffer
+
+        if (boss.isDead()) {
+            victoryTime += delta;
+        }
+
+        if (boss.isDead() && victoryTime > 1.0f && Gdx.input.justTouched()) {
+            com.badlogic.gdx.math.Vector3 mousePos = new com.badlogic.gdx.math.Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+            hudCamera.unproject(mousePos);
+            if (mousePos.x >= 540 && mousePos.x <= 740 && mousePos.y >= 295 && mousePos.y <= 345) {
+                ((GreenGuardianGame) game).playButtonSound();
+                if (levelIndex == 1) {
+                    game.setScreen(new PlayScreen(game, batch, font, hudCamera, 2));
+                } else {
+                    game.setScreen(new MenuScreen(game, batch, font, hudCamera));
+                }
+                return;
+            }
+        }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.B) && gameState != GameState.GAME_OVER && !boss.isDead()) {
             gameState = (gameState == GameState.SHOP) ? GameState.PLAYING : GameState.SHOP;
@@ -209,7 +258,7 @@ public class PlayScreen extends BaseScreen {
         hud.drawOverlays(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, boss);
 
         batch.setProjectionMatrix(hudCamera.combined);
-        hud.drawTextAndIcons(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, boss, playerSouls, STAFF_COST, shopMessage);
+        hud.drawTextAndIcons(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, boss, playerSouls, STAFF_COST, shopMessage, levelIndex);
     }
 
     private void updateWorld(float delta) {
@@ -293,6 +342,12 @@ public class PlayScreen extends BaseScreen {
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true); // Updates the viewport with the new width and height
+    }
+
+    @Override
+    public void show() {
+        Gdx.input.setInputProcessor(null);
+        ((GreenGuardianGame) game).playGameplayMusic();
     }
 
     @Override

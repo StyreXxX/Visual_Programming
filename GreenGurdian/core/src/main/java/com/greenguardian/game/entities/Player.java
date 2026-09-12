@@ -17,9 +17,9 @@ public class Player extends Entity {
 
     private boolean hasStaff = false;
 
-    private final float JUMP_SPEED = 875f;
-    private final float PLAYER_SPEED = 315f;
-    private static final int INITIAL_MAX_HEALTH = 10;
+    private final float JUMP_SPEED = 1000f;
+    private final float PLAYER_SPEED = 500f;
+    private static final int INITIAL_MAX_HEALTH = 1000;
 
     public Player(float startX, float startY, AssetLoader assets) {
         super(startX, startY, 30, 70);

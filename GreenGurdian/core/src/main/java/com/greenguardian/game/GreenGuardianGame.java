@@ -1,6 +1,11 @@
 package com.greenguardian.game;
 
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -17,6 +22,10 @@ public class GreenGuardianGame extends Game {
     public OrthographicCamera hudCamera;
     public Viewport hudViewport;
 
+    public Music startMusic;
+    public Music gameplayMusic;
+    public Sound buttonSound;
+
     @Override
     public void create() {
         batch = new SpriteBatch();
@@ -29,7 +38,43 @@ public class GreenGuardianGame extends Game {
         hudCamera = new OrthographicCamera();
         hudViewport = new StretchViewport(1280, 720, hudCamera);
 
+        startMusic = Gdx.audio.newMusic(Gdx.files.internal("audio/start-music.mp3"));
+        startMusic.setLooping(true);
+        startMusic.setVolume(0.5f);
+
+        gameplayMusic = Gdx.audio.newMusic(Gdx.files.internal("audio/gameplay-music.mp3"));
+        gameplayMusic.setLooping(true);
+        gameplayMusic.setVolume(0.5f);
+
+        buttonSound = Gdx.audio.newSound(Gdx.files.internal("audio/button-click-sound.mp3"));
+
+        playStartMusic();
+
         setScreen(new StartScreen(this, batch, font, hudCamera));
+    }
+
+    public void playButtonSound() {
+        if (buttonSound != null) {
+            buttonSound.play(1.0f);
+        }
+    }
+
+    public void playStartMusic() {
+        if (gameplayMusic.isPlaying()) {
+            gameplayMusic.stop();
+        }
+        if (!startMusic.isPlaying()) {
+            startMusic.play();
+        }
+    }
+
+    public void playGameplayMusic() {
+        if (startMusic.isPlaying()) {
+            startMusic.stop();
+        }
+        if (!gameplayMusic.isPlaying()) {
+            gameplayMusic.play();
+        }
     }
 
     @Override
@@ -49,5 +94,8 @@ public class GreenGuardianGame extends Game {
         batch.dispose();
         font.dispose();
         assets.dispose();
+        if (startMusic != null) startMusic.dispose();
+        if (gameplayMusic != null) gameplayMusic.dispose();
+        if (buttonSound != null) buttonSound.dispose();
     }
 }

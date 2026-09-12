@@ -116,7 +116,7 @@ public class HUD {
         Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
-    public void drawTextAndIcons(boolean isGameOver, boolean isShopOpen, Boss boss, int playerSouls, int staffCost, String shopMessage) {
+    public void drawTextAndIcons(boolean isGameOver, boolean isShopOpen, Boss boss, int playerSouls, int staffCost, String shopMessage, int levelIndex) {
         batch.begin();
 
         if (!isGameOver && !boss.isDead()) {
@@ -165,7 +165,11 @@ public class HUD {
             font.setColor(Color.GOLD);
             font.draw(batch, "VICTORY ACHIEVED!", 500, 430);
             font.setColor(Color.WHITE);
-            font.draw(batch, "Next Level", 575, 328);
+            if (levelIndex == 2) {
+                font.draw(batch, "Main Menu", 575, 328);
+            } else {
+                font.draw(batch, "Next Level", 575, 328);
+            }
         }
         batch.end();
     }
