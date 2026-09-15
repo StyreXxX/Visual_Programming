@@ -12,7 +12,7 @@ import com.greenguardian.game.assets.AssetLoader;
 
 public class Player extends Entity {
     private Texture staffWalkSheet, staffAttackSheet;
-    private Animation<TextureRegion> staffWalkAnim, staffAttackAnim;
+    private Animation<TextureRegion> staffWalkAnim, staffAttackAnim, idleAnim;
     // private TextureRegion staffIdleFrame;
 
     private boolean hasStaff = false;
@@ -21,6 +21,9 @@ public class Player extends Entity {
     private final float JUMP_SPEED = 1000f;
     private final float PLAYER_SPEED = 500f;
     private static final int INITIAL_MAX_HEALTH = 1000;
+
+    private float groundedTimer = 0f;
+    private static final float COYOTE_TIME = 0.15f;
 
     public Player(float startX, float startY, AssetLoader assets) {
         super(startX, startY, 30, 70);
@@ -38,6 +41,7 @@ public class Player extends Entity {
         walkAnim = createAnimation(walkSheet, 4, 0.15f);
         attackAnim = createAnimation(attackSheet, 3, 0.1f);
         deathAnim = createAnimation(deathSheet, 4, 0.2f);
+        idleAnim = createAnimation(assets.playerIdleSheet, 4, 0.1f);
 
         staffWalkAnim = createAnimation(staffWalkSheet, 4, 0.15f);
         staffAttackAnim = createAnimation(staffAttackSheet, 3, 0.1f);
@@ -74,6 +78,12 @@ public class Player extends Entity {
             velocityY = 0;
         }
 
+        if (isGrounded) {
+            groundedTimer = COYOTE_TIME;
+        } else {
+            groundedTimer -= delta;
+        }
+
         // Check water collision
         inWater = false;
         if (waterZones != null) {
@@ -82,8 +92,9 @@ public class Player extends Entity {
 
         // Reduce jump height in water
         float currentJumpSpeed = inWater ? JUMP_SPEED * 0.6f : JUMP_SPEED;
-        if (isGrounded && !isAttacking && (Gdx.input.isKeyJustPressed(Input.Keys.W) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE))) {
+        if (groundedTimer > 0 && !isAttacking && (Gdx.input.isKeyJustPressed(Input.Keys.W) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.UP))) {
             velocityY = currentJumpSpeed;
+            groundedTimer = 0;
         }
 
         float oldX = bounds.x;
@@ -92,10 +103,10 @@ public class Player extends Entity {
         float currentSpeed = inWater ? PLAYER_SPEED * 0.4f : PLAYER_SPEED;
 
         if (!isAttacking) {
-            if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+            if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
                 bounds.x -= currentSpeed * delta;
                 facingRight = false;
-            } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+            } else if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
                 bounds.x += currentSpeed * delta;
                 facingRight = true;
             }
@@ -135,8 +146,10 @@ public class Player extends Entity {
             currentFrame = (hasStaff ? staffAttackAnim : attackAnim).getKeyFrame(stateTime, false);
         } else if (velocityY != 0 && !inWater) {
             currentFrame = (hasStaff ? staffWalkAnim : walkAnim).getKeyFrame(0);
-        } else if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.D)) {
+        } else if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             currentFrame = (hasStaff ? staffWalkAnim : walkAnim).getKeyFrame(stateTime, true);
+        } else {
+            currentFrame = hasStaff ? staffWalkAnim.getKeyFrame(0) : idleAnim.getKeyFrame(stateTime, true);
         }
 
         // Submerge logic: slice the bottom 40% of the sprite

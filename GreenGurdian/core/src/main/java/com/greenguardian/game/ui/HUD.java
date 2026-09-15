@@ -101,22 +101,22 @@ public class HUD {
             shapeRenderer.rect(0, 0, 1280, 720);
 
             shapeRenderer.setColor(0f, 0f, 0f, 0.5f);
-            shapeRenderer.rect(538, 293, 204, 54);
+            shapeRenderer.rect(488, 293, 304, 54);
 
             shapeRenderer.setColor(0.18f, 0.18f, 0.22f, 0.95f);
-            shapeRenderer.rect(540, 295, 200, 50);
+            shapeRenderer.rect(490, 295, 300, 50);
 
             shapeRenderer.setColor(0.9f, 0.75f, 0.2f, 1f);
-            shapeRenderer.rectLine(540, 295, 740, 295, 2);
-            shapeRenderer.rectLine(540, 345, 740, 345, 2);
-            shapeRenderer.rectLine(540, 295, 540, 345, 2);
-            shapeRenderer.rectLine(740, 295, 740, 345, 2);
+            shapeRenderer.rectLine(490, 295, 790, 295, 2);
+            shapeRenderer.rectLine(490, 345, 790, 345, 2);
+            shapeRenderer.rectLine(490, 295, 490, 345, 2);
+            shapeRenderer.rectLine(790, 295, 790, 345, 2);
         }
         shapeRenderer.end();
         Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
-    public void drawTextAndIcons(boolean isGameOver, boolean isShopOpen, Boss boss, int playerSouls, int staffCost, String shopMessage, int levelIndex) {
+    public void drawTextAndIcons(boolean isGameOver, boolean isShopOpen, Boss boss, int playerSouls, int playerKeys, int staffCost, String shopMessage, int levelIndex) {
         batch.begin();
 
         if (!isGameOver && !boss.isDead()) {
@@ -125,6 +125,12 @@ public class HUD {
             batch.draw(assets.soulTexture, 1120, 30, 50, 50);
             font.setColor(Color.valueOf("B47EE5"));
             font.draw(batch, "x " + playerSouls, 1180, 68);
+
+            if (levelIndex == 1) {
+                batch.draw(assets.keyTexture, 1105, 75, 90, 90);
+                font.setColor(Color.LIGHT_GRAY);
+                font.draw(batch, "x " + playerKeys + "/3", 1180, 130);
+            }
 
             font.setColor(Color.WHITE);
             font.draw(batch, "PLAYER HP", 25, 712);
@@ -162,13 +168,16 @@ public class HUD {
             font.setColor(Color.WHITE);
             font.draw(batch, "Press ENTER to Restart", 485, 340);
         } else if (boss.isDead()) {
-            font.setColor(Color.GOLD);
-            font.draw(batch, "VICTORY ACHIEVED!", 500, 430);
-            font.setColor(Color.WHITE);
-            if (levelIndex == 2) {
-                font.draw(batch, "Main Menu", 575, 328);
+            if (levelIndex == 1 && playerKeys >= 3) {
+                font.setColor(Color.GOLD);
+                font.draw(batch, "SECRET LEVEL UNLOCKED!", 480, 430);
+                font.setColor(Color.WHITE);
+                font.draw(batch, "Enter Secret Level", 520, 328);
             } else {
-                font.draw(batch, "Next Level", 575, 328);
+                font.setColor(Color.GOLD);
+                font.draw(batch, "VICTORY ACHIEVED!", 500, 430);
+                font.setColor(Color.WHITE);
+                font.draw(batch, "Main Menu", 585, 328);
             }
         }
         batch.end();

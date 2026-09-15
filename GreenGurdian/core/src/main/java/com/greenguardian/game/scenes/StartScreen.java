@@ -30,7 +30,7 @@ public class StartScreen extends BaseScreen {
         Gdx.input.setInputProcessor(stage);
 
         startButtonTexture = new Texture("ui/btn_start.png");
-        Texture startButtonHoverTexture = new Texture("ui/btn_start_hover.png");
+        Texture startButtonHoverTexture = new Texture("ui/start_yellow.png");
 
         ImageButton.ImageButtonStyle startStyle = new ImageButton.ImageButtonStyle();
         startStyle.imageUp = new TextureRegionDrawable(new TextureRegion(startButtonTexture));

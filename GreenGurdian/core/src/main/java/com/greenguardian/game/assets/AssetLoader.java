@@ -11,12 +11,14 @@ public class AssetLoader {
     public Texture staffDisplayTexture;
     public Texture swordProjectileTexture;
     public Texture staffProjectileTexture;
+    public Texture keyTexture;
 
     // Player Textures
     public Texture playerWalkSheet;
     public Texture playerAttackSheet;
     public Texture playerDeathSheet;
     public Texture playerStandSheet;
+    public Texture playerIdleSheet;
     public Texture playerStaffWalkSheet;
     public Texture playerStaffAttackSheet;
     // public Texture playerStaffIdleSheet;
@@ -49,6 +51,7 @@ public class AssetLoader {
         playerAttackSheet = new Texture(Gdx.files.internal("characters/player/MainCharacterAttack.png"));
         playerDeathSheet = new Texture(Gdx.files.internal("characters/player/deathanimation.png"));
         playerStandSheet = new Texture(Gdx.files.internal("characters/player/MainCharacterStanding.png"));
+        playerIdleSheet = new Texture(Gdx.files.internal("characters/player/idle-animation.png"));
         playerStaffWalkSheet = new Texture(Gdx.files.internal("characters/player/mainCharacterStaffWalking.png"));
         playerStaffAttackSheet = new Texture(Gdx.files.internal("characters/player/mainCharacterStaffAttack.png"));
 
@@ -82,6 +85,8 @@ public class AssetLoader {
         p2.fill();
         staffProjectileTexture = new Texture(p2);
         p2.dispose();
+
+        keyTexture = new Texture(Gdx.files.internal("ui/key-white.gif"));
     }
 
     public void dispose() {
@@ -90,11 +95,13 @@ public class AssetLoader {
         if (staffDisplayTexture != null) staffDisplayTexture.dispose();
         if (swordProjectileTexture != null) swordProjectileTexture.dispose();
         if (staffProjectileTexture != null) staffProjectileTexture.dispose();
+        if (keyTexture != null) keyTexture.dispose();
 
         if (playerWalkSheet != null) playerWalkSheet.dispose();
         if (playerAttackSheet != null) playerAttackSheet.dispose();
         if (playerDeathSheet != null) playerDeathSheet.dispose();
         if (playerStandSheet != null) playerStandSheet.dispose();
+        if (playerIdleSheet != null) playerIdleSheet.dispose();
         if (playerStaffWalkSheet != null) playerStaffWalkSheet.dispose();
         if (playerStaffAttackSheet != null) playerStaffAttackSheet.dispose();
 

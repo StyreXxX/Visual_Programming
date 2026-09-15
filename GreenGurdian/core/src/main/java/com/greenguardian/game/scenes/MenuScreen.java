@@ -33,9 +33,9 @@ public class MenuScreen extends BaseScreen {
         game.playStartMusic();
 
         newGameTexture = new Texture("ui/btn_new_game.png");
-        Texture newGameHoverTexture = new Texture("ui/btn_new_game_hover.png");
+        Texture newGameHoverTexture = new Texture("ui/new game yellow.png");
         quitTexture = new Texture("ui/btn_quit.png");
-        Texture quitHoverTexture = new Texture("ui/btn_quit_hover.png");
+        Texture quitHoverTexture = new Texture("ui/quit yellow.png");
 
         ImageButton.ImageButtonStyle newGameStyle = new ImageButton.ImageButtonStyle();
         newGameStyle.imageUp = new TextureRegionDrawable(new TextureRegion(newGameTexture));

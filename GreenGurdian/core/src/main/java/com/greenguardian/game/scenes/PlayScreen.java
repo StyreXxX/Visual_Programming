@@ -47,8 +47,10 @@ public class PlayScreen extends BaseScreen {
     private Array<Enemy> enemies;
     private Array<Projectile> projectiles;
     private Array<Rectangle> mapSouls;
+    private Array<Rectangle> mapKeys;
 
     private int playerSouls = 140;
+    private int playerKeys = 0;
     private final int STAFF_COST = 150;
 
     public enum GameState {
@@ -83,7 +85,7 @@ public class PlayScreen extends BaseScreen {
         viewport = new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         camera.position.set(WORLD_WIDTH / 2f, WORLD_HEIGHT / 2f, 0);
 
-        String mapPath = (levelIndex == 2) ? "maps/level2/map2.tmx" : "maps/level1/copy.tmx";
+        String mapPath = (levelIndex == 2) ? "maps/level2/map2.tmx" : "maps/level1/test.tmx";
         System.out.println("LOADING LEVEL: " + levelIndex + " WITH MAP: " + mapPath);
 
         map = new TmxMapLoader().load(mapPath);
@@ -101,6 +103,7 @@ public class PlayScreen extends BaseScreen {
 
         enemies = new Array<>();
         mapSouls = new Array<>();
+        mapKeys = new Array<>();
         projectiles = new Array<>();
 
         MapObjects spawnObjects = null;
@@ -127,6 +130,8 @@ public class PlayScreen extends BaseScreen {
                         enemies.add(new Enemy(scaledX, scaledY, game.assets));
                     } else if (name.equals("soul")) {
                         mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE));
+                    } else if (name.equals("key")) {
+                        mapKeys.add(new Rectangle(scaledX, scaledY, TILE_SIZE * 2.5f, TILE_SIZE * 2.5f));
                     }
                 }
             }
@@ -273,7 +278,9 @@ public class PlayScreen extends BaseScreen {
         enemies.clear();
         projectiles.clear();
         mapSouls.clear();
+        mapKeys.clear();
         playerSouls = 0;
+        playerKeys = 0;
 
         MapObjects spawnObjects = null;
         if (map.getLayers().get("spawns") != null) {
@@ -293,6 +300,8 @@ public class PlayScreen extends BaseScreen {
                         enemies.add(new Enemy(scaledX, scaledY, game.assets));
                     } else if (name.equals("soul")) {
                         mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE));
+                    } else if (name.equals("key")) {
+                        mapKeys.add(new Rectangle(scaledX, scaledY, TILE_SIZE * 2, TILE_SIZE * 2));
                     }
                 }
             }
@@ -326,9 +335,9 @@ public class PlayScreen extends BaseScreen {
             com.badlogic.gdx.math.Vector3 mousePos = new com.badlogic.gdx.math.Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
             hudCamera.unproject(mousePos);
 
-            if (mousePos.x >= 540 && mousePos.x <= 740 && mousePos.y >= 295 && mousePos.y <= 345) {
+            if (mousePos.x >= 490 && mousePos.x <= 790 && mousePos.y >= 295 && mousePos.y <= 345) {
                 ((GreenGuardianGame) game).playButtonSound();
-                if (levelIndex == 1) {
+                if (levelIndex == 1 && playerKeys >= 3) {
                     game.setScreen(new PlayScreen(game, batch, font, hudCamera, 2));
                 } else {
                     game.setScreen(new MenuScreen(game, batch, font, hudCamera));
@@ -396,6 +405,9 @@ public class PlayScreen extends BaseScreen {
         for (Rectangle s : mapSouls) {
             batch.draw(game.assets.soulTexture, s.x, s.y, s.width, s.height);
         }
+        for (Rectangle k : mapKeys) {
+            batch.draw(game.assets.keyTexture, k.x, k.y, k.width, k.height);
+        }
         for (Enemy e : enemies) e.draw(batch);
 
         player.draw(batch);
@@ -421,7 +433,7 @@ public class PlayScreen extends BaseScreen {
         hud.drawOverlays(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss);
 
         batch.setProjectionMatrix(hudCamera.combined);
-        hud.drawTextAndIcons(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss, playerSouls, STAFF_COST, shopMessage, levelIndex);
+        hud.drawTextAndIcons(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss, playerSouls, playerKeys, STAFF_COST, shopMessage, levelIndex);
 
         if (gameState == GameState.PAUSE || gameState == GameState.OPTIONS) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -453,6 +465,14 @@ public class PlayScreen extends BaseScreen {
             if (player.getBounds().overlaps(s)) {
                 playerSouls += 10;
                 mapSouls.removeIndex(i);
+            }
+        }
+
+        for (int i = mapKeys.size - 1; i >= 0; i--) {
+            Rectangle k = mapKeys.get(i);
+            if (player.getBounds().overlaps(k)) {
+                playerKeys++;
+                mapKeys.removeIndex(i);
             }
         }
 
