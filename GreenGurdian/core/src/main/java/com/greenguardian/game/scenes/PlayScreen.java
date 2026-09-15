@@ -115,22 +115,28 @@ public class PlayScreen extends BaseScreen {
 
         if (spawnObjects != null) {
             for (MapObject obj : spawnObjects) {
-                if (obj.getName() != null) {
-                    float scaledX = (float) obj.getProperties().get("x") * SCALE_FACTOR;
-                    float scaledY = (float) obj.getProperties().get("y") * SCALE_FACTOR;
-                    String name = obj.getName().toLowerCase();
+                if (obj.getProperties().get("x") != null && obj.getProperties().get("y") != null) {
+                    float scaledX = ((Number) obj.getProperties().get("x")).floatValue() * SCALE_FACTOR;
+                    float scaledY = ((Number) obj.getProperties().get("y")).floatValue() * SCALE_FACTOR;
+                    String name = obj.getName() != null ? obj.getName().toLowerCase() : "";
+                    String type = "";
+                    if (obj.getProperties().get("type") != null) {
+                        type = obj.getProperties().get("type").toString().toLowerCase();
+                    } else if (obj.getProperties().get("class") != null) {
+                        type = obj.getProperties().get("class").toString().toLowerCase();
+                    }
 
-                    if (name.equals("player")) {
+                    if (name.equals("player") || type.contains("player") || name.contains("player")) {
                         pStartX = scaledX;
                         pStartY = scaledY;
-                    } else if (name.equals("boss")) {
+                    } else if (name.equals("boss") || type.contains("boss") || name.contains("boss")) {
                         bStartX = scaledX;
                         bStartY = scaledY;
-                    } else if (name.startsWith("enemy")) {
+                    } else if (name.startsWith("enemy") || type.contains("enemy")) {
                         enemies.add(new Enemy(scaledX, scaledY, game.assets));
-                    } else if (name.equals("soul")) {
+                    } else if (name.equals("soul") || type.contains("soul")) {
                         mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE));
-                    } else if (name.equals("key")) {
+                    } else if (name.equals("key") || type.contains("key")) {
                         mapKeys.add(new Rectangle(scaledX, scaledY, TILE_SIZE * 2.5f, TILE_SIZE * 2.5f));
                     }
                 }
@@ -291,16 +297,22 @@ public class PlayScreen extends BaseScreen {
 
         if (spawnObjects != null) {
             for (MapObject obj : spawnObjects) {
-                if (obj.getName() != null) {
-                    float scaledX = (float) obj.getProperties().get("x") * SCALE_FACTOR;
-                    float scaledY = (float) obj.getProperties().get("y") * SCALE_FACTOR;
-                    String name = obj.getName().toLowerCase();
+                if (obj.getProperties().get("x") != null && obj.getProperties().get("y") != null) {
+                    float scaledX = ((Number) obj.getProperties().get("x")).floatValue() * SCALE_FACTOR;
+                    float scaledY = ((Number) obj.getProperties().get("y")).floatValue() * SCALE_FACTOR;
+                    String name = obj.getName() != null ? obj.getName().toLowerCase() : "";
+                    String type = "";
+                    if (obj.getProperties().get("type") != null) {
+                        type = obj.getProperties().get("type").toString().toLowerCase();
+                    } else if (obj.getProperties().get("class") != null) {
+                        type = obj.getProperties().get("class").toString().toLowerCase();
+                    }
 
-                    if (name.startsWith("enemy")) {
+                    if (name.startsWith("enemy") || type.contains("enemy")) {
                         enemies.add(new Enemy(scaledX, scaledY, game.assets));
-                    } else if (name.equals("soul")) {
+                    } else if (name.equals("soul") || type.contains("soul")) {
                         mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE));
-                    } else if (name.equals("key")) {
+                    } else if (name.equals("key") || type.contains("key")) {
                         mapKeys.add(new Rectangle(scaledX, scaledY, TILE_SIZE * 2, TILE_SIZE * 2));
                     }
                 }
@@ -337,7 +349,7 @@ public class PlayScreen extends BaseScreen {
 
             if (mousePos.x >= 490 && mousePos.x <= 790 && mousePos.y >= 295 && mousePos.y <= 345) {
                 ((GreenGuardianGame) game).playButtonSound();
-                if (levelIndex == 1 && playerKeys >= 3) {
+                if (levelIndex == 1) {
                     game.setScreen(new PlayScreen(game, batch, font, hudCamera, 2));
                 } else {
                     game.setScreen(new MenuScreen(game, batch, font, hudCamera));

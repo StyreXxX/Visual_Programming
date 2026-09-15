@@ -181,6 +181,7 @@ public class CentaurBoss extends Boss {
         float drawWidth = drawHeight * aspect;
 
         float drawX = bounds.x + (bounds.width / 2f) - (drawWidth / 2f);
-        drawFlipped(batch, currentFrame, drawX, bounds.y, drawWidth, drawHeight, facingRight);
+        float drawY = bounds.y - 28f;
+        drawFlipped(batch, currentFrame, drawX, drawY, drawWidth, drawHeight, facingRight);
     }
 }

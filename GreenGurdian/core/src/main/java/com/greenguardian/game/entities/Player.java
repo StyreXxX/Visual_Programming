@@ -41,7 +41,7 @@ public class Player extends Entity {
         walkAnim = createAnimation(walkSheet, 4, 0.15f);
         attackAnim = createAnimation(attackSheet, 3, 0.1f);
         deathAnim = createAnimation(deathSheet, 4, 0.2f);
-        idleAnim = createAnimation(assets.playerIdleSheet, 4, 0.1f);
+        idleAnim = createAnimation(assets.playerIdleSheet, 8, 0.12f);
 
         staffWalkAnim = createAnimation(staffWalkSheet, 4, 0.15f);
         staffAttackAnim = createAnimation(staffAttackSheet, 3, 0.1f);
@@ -168,8 +168,8 @@ public class Player extends Entity {
         float drawWidth = fullDrawHeight * aspect;
         float drawX = bounds.x + (bounds.width / 2f) - (drawWidth / 2f);
 
-        // Shift the Y rendering position up by 40 units to compensate for the missing bottom half
-        float drawY = inWater ? bounds.y + 40f : bounds.y;
+        // Shift the Y rendering position up by 40 units in water, or down by 8 units to compensate for sprite bottom padding
+        float drawY = inWater ? bounds.y + 40f : bounds.y - 8f;
 
         drawFlipped(batch, renderFrame, drawX, drawY, drawWidth, drawHeight, facingRight);
     }

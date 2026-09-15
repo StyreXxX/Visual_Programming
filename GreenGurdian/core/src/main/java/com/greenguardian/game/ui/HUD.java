@@ -168,11 +168,15 @@ public class HUD {
             font.setColor(Color.WHITE);
             font.draw(batch, "Press ENTER to Restart", 485, 340);
         } else if (boss.isDead()) {
-            if (levelIndex == 1 && playerKeys >= 3) {
+            if (levelIndex == 1) {
                 font.setColor(Color.GOLD);
-                font.draw(batch, "SECRET LEVEL UNLOCKED!", 480, 430);
+                if (playerKeys >= 3) {
+                    font.draw(batch, "ALL KEYS FOUND!", 520, 430);
+                } else {
+                    font.draw(batch, "LEVEL 1 CLEARED!", 520, 430);
+                }
                 font.setColor(Color.WHITE);
-                font.draw(batch, "Enter Secret Level", 520, 328);
+                font.draw(batch, "Enter Level 2", 555, 328);
             } else {
                 font.setColor(Color.GOLD);
                 font.draw(batch, "VICTORY ACHIEVED!", 500, 430);
