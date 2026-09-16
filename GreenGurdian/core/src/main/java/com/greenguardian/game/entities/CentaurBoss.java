@@ -172,12 +172,17 @@ public class CentaurBoss extends Boss {
     }
 
     @Override
-    public void takeDamage(int amount) {
+    public void takeDamage(float amount) {
         // If shielding when attacked, block damage
         if (isShielding && !isDead) {
-            amount = Math.max(1, amount / 2);
+            amount = Math.max(0.5f, amount / 2f);
         }
         super.takeDamage(amount);
+    }
+
+    @Override
+    public void takeDamage(int amount) {
+        takeDamage((float) amount);
     }
 
     @Override

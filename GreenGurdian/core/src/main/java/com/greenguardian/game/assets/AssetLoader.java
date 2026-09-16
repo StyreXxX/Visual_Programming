@@ -48,10 +48,15 @@ public class AssetLoader {
     public Texture centaurChargeAttackSheet;
     public Texture centaurDeathSheet;
 
-    // Enemy Textures
+    // Enemy Textures (Map 1)
     public Texture enemyWalkSheet;
     public Texture enemyAttackSheet;
     public Texture enemyDeathSheet;
+
+    // Enemy Textures (Map 2)
+    public Texture enemy2WalkSheet;
+    public Texture enemy2AttackSheet;
+    public Texture enemy2DeathSheet;
 
     public void load() {
         shopTexture = new Texture(Gdx.files.internal("ui/shop.png"));
@@ -92,10 +97,15 @@ public class AssetLoader {
         centaurChargeAttackSheet = boss2ChargeSheet;
         centaurDeathSheet = boss2DeathSheet;
 
-        // Enemy
-        enemyWalkSheet = new Texture(Gdx.files.internal("characters/enemy/normalEnemyWalking.png"));
-        enemyAttackSheet = new Texture(Gdx.files.internal("characters/enemy/normalEnemyAttacking.png"));
-        enemyDeathSheet = new Texture(Gdx.files.internal("characters/enemy/normalEnemyDeath.png"));
+        // Enemy Map 1
+        enemyWalkSheet = new Texture(Gdx.files.internal("characters/enemy/EnemyMap1/normalEnemyWalking.png"));
+        enemyAttackSheet = new Texture(Gdx.files.internal("characters/enemy/EnemyMap1/normalEnemyAttacking.png"));
+        enemyDeathSheet = new Texture(Gdx.files.internal("characters/enemy/EnemyMap1/normalEnemyDeath.png"));
+
+        // Enemy Map 2
+        enemy2WalkSheet = new Texture(Gdx.files.internal("characters/enemy/EnemyMap2/Enemy2Walk.png"));
+        enemy2AttackSheet = new Texture(Gdx.files.internal("characters/enemy/EnemyMap2/Enemy2Attack.png"));
+        enemy2DeathSheet = new Texture(Gdx.files.internal("characters/enemy/EnemyMap2/enemy2Death.png"));
 
         Pixmap p1 = new Pixmap(16, 8, Pixmap.Format.RGBA8888);
         p1.setColor(Color.GREEN);
@@ -147,5 +157,9 @@ public class AssetLoader {
         if (enemyWalkSheet != null) enemyWalkSheet.dispose();
         if (enemyAttackSheet != null) enemyAttackSheet.dispose();
         if (enemyDeathSheet != null) enemyDeathSheet.dispose();
+
+        if (enemy2WalkSheet != null) enemy2WalkSheet.dispose();
+        if (enemy2AttackSheet != null) enemy2AttackSheet.dispose();
+        if (enemy2DeathSheet != null) enemy2DeathSheet.dispose();
     }
 }

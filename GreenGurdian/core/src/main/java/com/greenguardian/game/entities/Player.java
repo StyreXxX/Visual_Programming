@@ -19,6 +19,8 @@ public class Player extends Entity {
     private boolean hasUnlockedStaff = false;
     private int equippedWeapon = 1; // 1 = Sword, 2 = Staff
     private boolean inWater = false;
+    private boolean wasInWater = false;
+    private float waterDebuffTimer = 0f;
     private boolean hasDealtMeleeDamage = false;
 
     private final float JUMP_SPEED = 1000f;
@@ -94,6 +96,18 @@ public class Player extends Entity {
         this.hasDealtMeleeDamage = dealt;
     }
 
+    public boolean isWaterDebuffed() {
+        return inWater || waterDebuffTimer > 0f;
+    }
+
+    public float getAttackDamageMultiplier() {
+        return isWaterDebuffed() ? 0.5f : 1.0f;
+    }
+
+    public float getMeleeDamage() {
+        return 1.0f * getAttackDamageMultiplier();
+    }
+
     public boolean canDealMeleeDamage() {
         return isAttacking && !isStaffEquipped() && !hasDealtMeleeDamage && stateTime >= 0.08f && stateTime <= 0.45f;
     }
@@ -111,7 +125,11 @@ public class Player extends Entity {
             stateTime = 0;
         }
 
-        stateTime += delta;
+        if (isAttacking && isWaterDebuffed()) {
+            stateTime += delta * 0.5f; // 50% slower attack speed
+        } else {
+            stateTime += delta;
+        }
         if (isDead) return;
 
         float oldY = bounds.y;
@@ -137,8 +155,37 @@ public class Player extends Entity {
             inWater = checkCollision(bounds, waterZones, scale);
         }
 
-        // Reduce jump height in water
-        float currentJumpSpeed = inWater ? JUMP_SPEED * 0.6f : JUMP_SPEED;
+        // When player touches water or comes out of water, trigger/refresh debuff for 5 seconds
+        if (inWater) {
+            if (!wasInWater || waterDebuffTimer <= 0f) {
+                waterDebuffTimer = 5.0f;
+            }
+        } else if (wasInWater) {
+            // Player just came out of water: debuff stays for 5 seconds
+            waterDebuffTimer = 5.0f;
+        }
+        wasInWater = inWater;
+
+        // Process water debuff (duration is exactly 5 seconds, reducing health slowly by 25%)
+        if (waterDebuffTimer > 0f) {
+            waterDebuffTimer -= delta;
+
+            // Reduce health slowly by 25% of max health over 5 seconds (5% per second)
+            float damageThisFrame = (maxHealth * 0.25f / 5.0f) * delta;
+            health -= damageThisFrame;
+            if (health <= 0f) {
+                health = 0f;
+                isDead = true;
+                stateTime = 0f;
+            }
+
+            if (waterDebuffTimer < 0f) {
+                waterDebuffTimer = 0f;
+            }
+        }
+
+        // Reduce jump height to half (50%) when in water or water debuffed (persists for 5s out of water)
+        float currentJumpSpeed = isWaterDebuffed() ? JUMP_SPEED * 0.5f : JUMP_SPEED;
         if (groundedTimer > 0 && !isAttacking && (Gdx.input.isKeyJustPressed(Input.Keys.W) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.UP))) {
             velocityY = currentJumpSpeed;
             groundedTimer = 0;
@@ -146,8 +193,8 @@ public class Player extends Entity {
 
         float oldX = bounds.x;
 
-        // Reduce movement speed by 60% in water
-        float currentSpeed = inWater ? PLAYER_SPEED * 0.4f : PLAYER_SPEED;
+        // Reduce movement speed by 50% when in water or water debuffed (persists for 5s out of water)
+        float currentSpeed = isWaterDebuffed() ? PLAYER_SPEED * 0.5f : PLAYER_SPEED;
 
         if (!isAttacking) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1) || Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_1)) {
@@ -191,7 +238,8 @@ public class Player extends Entity {
         float px = facingRight ? bounds.x + 50 : bounds.x - 20;
         float py = bounds.y + 30;
 
-        projectiles.add(new Projectile(px, py, facingRight, 2));
+        float staffDamage = 2.0f * getAttackDamageMultiplier();
+        projectiles.add(new Projectile(px, py, facingRight, 2, staffDamage));
     }
 
     @Override

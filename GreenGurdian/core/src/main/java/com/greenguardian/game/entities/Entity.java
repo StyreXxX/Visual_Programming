@@ -27,8 +27,8 @@ public abstract class Entity {
     protected float velocityY = 0;
     protected final float GRAVITY = -1500f;
 
-    protected int maxHealth;
-    protected int health;
+    protected float maxHealth;
+    protected float health;
 
     private static final Rectangle tmpRect = new Rectangle();
     private static final Polygon tmpPolygon = new Polygon();
@@ -60,7 +60,7 @@ public abstract class Entity {
         return new Animation<>(frameDuration, frames);
     }
 
-    public void takeDamage(int amount) {
+    public void takeDamage(float amount) {
         if (!isDead) {
             health -= amount;
             if (health <= 0) {
@@ -69,6 +69,10 @@ public abstract class Entity {
                 stateTime = 0;
             }
         }
+    }
+
+    public void takeDamage(int amount) {
+        takeDamage((float) amount);
     }
 
     protected void drawFlipped(SpriteBatch batch, TextureRegion region, float x, float y, float width, float height, boolean faceRight) {
@@ -140,11 +144,11 @@ public abstract class Entity {
     }
 
     public int getHealth() {
-        return health;
+        return (int) Math.ceil(health);
     }
 
     public int getMaxHealth() {
-        return maxHealth;
+        return (int) maxHealth;
     }
 
     public boolean isAwake() {

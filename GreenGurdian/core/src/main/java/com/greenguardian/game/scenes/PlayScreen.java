@@ -133,7 +133,7 @@ public class PlayScreen extends BaseScreen {
                         bStartX = scaledX;
                         bStartY = scaledY;
                     } else if (name.startsWith("enemy") || type.contains("enemy")) {
-                        enemies.add(new Enemy(scaledX, scaledY, game.assets));
+                        enemies.add(new Enemy(scaledX, scaledY, game.assets, levelIndex));
                     } else if (name.equals("soul") || type.contains("soul")) {
                         mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE));
                     } else if (name.equals("key") || type.contains("key")) {
@@ -309,7 +309,7 @@ public class PlayScreen extends BaseScreen {
                     }
 
                     if (name.startsWith("enemy") || type.contains("enemy")) {
-                        enemies.add(new Enemy(scaledX, scaledY, game.assets));
+                        enemies.add(new Enemy(scaledX, scaledY, game.assets, levelIndex));
                     } else if (name.equals("soul") || type.contains("soul")) {
                         mapSouls.add(new Rectangle(scaledX, scaledY, TILE_SIZE, TILE_SIZE));
                     } else if (name.equals("key") || type.contains("key")) {
@@ -477,15 +477,16 @@ public class PlayScreen extends BaseScreen {
         if (player.canDealMeleeDamage()) {
             Rectangle meleeHitbox = player.getMeleeHitbox();
             boolean hitAnything = false;
+            float damage = player.getMeleeDamage();
 
             if (!activeBoss.isDead() && meleeHitbox.overlaps(activeBoss.getBounds())) {
-                activeBoss.takeDamage(1);
+                activeBoss.takeDamage(damage);
                 hitAnything = true;
             }
 
             for (Enemy e : enemies) {
                 if (!e.isDead() && meleeHitbox.overlaps(e.getBounds())) {
-                    e.takeDamage(1);
+                    e.takeDamage(damage);
                     if (e.isDead()) {
                         playerSouls += 15;
                     }

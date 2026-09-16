@@ -15,21 +15,40 @@ public class Enemy extends Entity {
     private float patrolRange = 100f;
     private float speed = 50f;
 
+    private int mapIndex = 1;
+
     public Enemy(float startX, float startY, AssetLoader assets) {
-        super(startX, startY, 30, 70);
+        this(startX, startY, assets, 1);
+    }
+
+    public Enemy(float startX, float startY, AssetLoader assets, int mapIndex) {
+        super(startX, startY, 40, 70);
+        this.mapIndex = mapIndex;
         this.maxHealth = INITIAL_MAX_HEALTH;
         this.health = INITIAL_MAX_HEALTH;
         this.startX = startX;
 
-        walkSheet = assets.enemyWalkSheet;
-        attackSheet = assets.enemyAttackSheet;
-        deathSheet = assets.enemyDeathSheet;
+        if (mapIndex == 2) {
+            walkSheet = assets.enemy2WalkSheet;
+            attackSheet = assets.enemy2AttackSheet;
+            deathSheet = assets.enemy2DeathSheet;
 
-        walkAnim = createAnimation(walkSheet, 4, 0.2f);
-        attackAnim = createAnimation(attackSheet, 3, 0.15f);
-        deathAnim = createAnimation(deathSheet, 4, 0.2f);
+            walkAnim = createAnimation(walkSheet, 8, 0.12f);
+            attackAnim = createAnimation(attackSheet, 6, 0.12f);
+            deathAnim = createAnimation(deathSheet, 6, 0.15f);
 
-        idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
+            idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 8, walkSheet.getHeight());
+        } else {
+            walkSheet = assets.enemyWalkSheet;
+            attackSheet = assets.enemyAttackSheet;
+            deathSheet = assets.enemyDeathSheet;
+
+            walkAnim = createAnimation(walkSheet, 4, 0.2f);
+            attackAnim = createAnimation(attackSheet, 3, 0.15f);
+            deathAnim = createAnimation(deathSheet, 4, 0.2f);
+
+            idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 4, walkSheet.getHeight());
+        }
     }
 
     public boolean playerInRange(Player player) {

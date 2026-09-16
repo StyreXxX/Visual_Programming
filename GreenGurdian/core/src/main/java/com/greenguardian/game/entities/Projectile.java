@@ -5,7 +5,7 @@ import com.badlogic.gdx.math.Rectangle;
 public class Projectile {
     public Rectangle bounds;
     public boolean facingRight;
-    public int damage;
+    public float damage;
     public int type; // 1 = Sword Projectile, 2 = Staff Magic Wave
 
     public Projectile(float x, float y, boolean facingRight, int type) {
@@ -15,12 +15,17 @@ public class Projectile {
         if (type == 2) {
             // Staff Projectile: Bigger hitbox & higher damage
             this.bounds = new Rectangle(x, y, 28, 16);
-            this.damage = 2;
+            this.damage = 2.0f;
         } else {
             // Sword Projectile: Standard settings
             this.bounds = new Rectangle(x, y, 16, 8);
-            this.damage = 1;
+            this.damage = 1.0f;
         }
+    }
+
+    public Projectile(float x, float y, boolean facingRight, int type, float damage) {
+        this(x, y, facingRight, type);
+        this.damage = damage;
     }
 
     public void update(float delta) {
