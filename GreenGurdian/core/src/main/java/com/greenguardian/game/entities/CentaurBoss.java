@@ -9,8 +9,8 @@ import com.badlogic.gdx.math.Rectangle;
 import com.greenguardian.game.assets.AssetLoader;
 
 public class CentaurBoss extends Boss {
-    private Texture smashAttackSheet, chargeSheet, dashSheet, shieldSheet;
-    private Animation<TextureRegion> smashAttackAnim, chargeAnim, dashAnim, shieldAnim;
+    private Texture smashAttackSheet, chargeSheet, shieldSheet;
+    private Animation<TextureRegion> smashAttackAnim, chargeAnim, shieldAnim;
 
     private boolean isSmashing = false;
     private boolean isCharging = false;
@@ -34,7 +34,6 @@ public class CentaurBoss extends Boss {
         attackSheet = assets.boss2AttackSheet;
         smashAttackSheet = assets.boss2SmashSheet;
         chargeSheet = assets.boss2ChargeSheet;
-        dashSheet = assets.boss2DashSheet;
         shieldSheet = assets.boss2ShieldSheet;
         deathSheet = assets.boss2DeathSheet;
 
@@ -43,7 +42,6 @@ public class CentaurBoss extends Boss {
         attackAnim = createGridAnimation(attackSheet, 4, 2, 0.10f);
         smashAttackAnim = createGridAnimation(smashAttackSheet, 4, 2, 0.12f);
         chargeAnim = createGridAnimation(chargeSheet, 4, 2, 0.10f);
-        dashAnim = createGridAnimation(dashSheet, 4, 2, 0.10f);
         shieldAnim = createGridAnimation(shieldSheet, 4, 2, 0.12f);
         deathAnim = createGridAnimation(deathSheet, 4, 2, 0.15f);
 

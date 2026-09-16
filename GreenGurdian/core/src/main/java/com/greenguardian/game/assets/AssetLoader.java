@@ -36,7 +36,6 @@ public class AssetLoader {
     public Texture boss2AttackSheet;
     public Texture boss2SmashSheet;
     public Texture boss2ChargeSheet;
-    public Texture boss2DashSheet;
     public Texture boss2ShieldSheet;
     public Texture boss2DeathSheet;
 
@@ -79,7 +78,6 @@ public class AssetLoader {
         boss2AttackSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Attack.png"));
         boss2SmashSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Smash.png"));
         boss2ChargeSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Charge.png"));
-        boss2DashSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Dash.png"));
         boss2ShieldSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Shield.png"));
         boss2DeathSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Death.png"));
 
@@ -137,7 +135,6 @@ public class AssetLoader {
         if (boss2AttackSheet != null) boss2AttackSheet.dispose();
         if (boss2SmashSheet != null) boss2SmashSheet.dispose();
         if (boss2ChargeSheet != null) boss2ChargeSheet.dispose();
-        if (boss2DashSheet != null) boss2DashSheet.dispose();
         if (boss2ShieldSheet != null) boss2ShieldSheet.dispose();
         if (boss2DeathSheet != null) boss2DeathSheet.dispose();
 
