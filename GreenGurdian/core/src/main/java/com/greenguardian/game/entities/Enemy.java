@@ -116,8 +116,9 @@ public class Enemy extends Entity {
         float aspect = (float) currentFrame.getRegionWidth() / currentFrame.getRegionHeight();
         float drawWidth = drawHeight * aspect;
         float drawX = bounds.x + (bounds.width / 2f) - (drawWidth / 2f);
+        float drawY = (mapIndex == 2) ? bounds.y - 10f : bounds.y;
 
-        drawFlipped(batch, currentFrame, drawX, bounds.y, drawWidth, drawHeight, facingRight);
+        drawFlipped(batch, currentFrame, drawX, drawY, drawWidth, drawHeight, facingRight);
     }
 
     public void drawFloatingHealth(ShapeRenderer shapeRenderer) {
@@ -125,7 +126,7 @@ public class Enemy extends Entity {
             float width = 40f;
             float height = 5f;
             float x = bounds.x + (bounds.width / 2) - (width / 2);
-            float y = bounds.y + bounds.height + 15;
+            float y = (mapIndex == 2) ? bounds.y + bounds.height + 5 : bounds.y + bounds.height + 15;
 
             shapeRenderer.setColor(Color.RED);
             shapeRenderer.rect(x, y, width, height);
