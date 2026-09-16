@@ -95,7 +95,29 @@ public class PlayScreen extends BaseScreen {
         System.out.println("LOADING LEVEL: " + levelIndex + " WITH MAP: " + mapPath);
 
         map = new TmxMapLoader().load(mapPath);
-        mapRenderer = new OrthogonalTiledMapRenderer(map, SCALE_FACTOR);
+        mapRenderer = new OrthogonalTiledMapRenderer(map, SCALE_FACTOR) {
+            @Override
+            public void renderObject(MapObject object) {
+                if (object instanceof com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject) {
+                    com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject tileObj = (com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject) object;
+                    com.badlogic.gdx.graphics.g2d.TextureRegion region = tileObj.getTextureRegion();
+                    if (region != null) {
+                        float x = tileObj.getX() * unitScale;
+                        float y = tileObj.getY() * unitScale;
+                        float w = region.getRegionWidth() * unitScale;
+                        float h = region.getRegionHeight() * unitScale;
+
+                        boolean flipX = tileObj.isFlipHorizontally();
+                        boolean flipY = tileObj.isFlipVertically();
+                        if (flipX || flipY) region.flip(flipX, flipY);
+
+                        getBatch().draw(region, x, y, w, h);
+
+                        if (flipX || flipY) region.flip(flipX, flipY); // restore
+                    }
+                }
+            }
+        };
 
         if (map.getLayers().get("blocks") != null) {
             mapBlocks = map.getLayers().get("blocks").getObjects();
@@ -464,7 +486,15 @@ public class PlayScreen extends BaseScreen {
         camera.position.y = Math.max(WORLD_HEIGHT / 2 + buffer, Math.min(camera.position.y, mapHeightInPixels - WORLD_HEIGHT / 2 - buffer));
         camera.update();
 
-        mapRenderer.setView(camera);
+        // Expand culling bounds by 750 world pixels so large objects & trees (up to 200px tiles * 2.5 scale) do not disappear prematurely
+        float extraCullPadding = 750f;
+        mapRenderer.setView(
+            camera.combined,
+            camera.position.x - (WORLD_WIDTH / 2f) - extraCullPadding,
+            camera.position.y - (WORLD_HEIGHT / 2f) - extraCullPadding,
+            WORLD_WIDTH + (extraCullPadding * 2f),
+            WORLD_HEIGHT + (extraCullPadding * 2f)
+        );
         mapRenderer.render();
 
         batch.setProjectionMatrix(camera.combined);

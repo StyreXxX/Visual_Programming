@@ -270,7 +270,6 @@
   <object id="69" name="Collision" type="Solid" x="2208.5" y="220" width="15" height="43"/>
   <object id="70" name="Collision" type="Solid" x="2222" y="226" width="16.5" height="41.5"/>
   <object id="71" name="Collision" type="Solid" x="2236" y="227.5" width="15" height="38.5"/>
-  <object id="72" name="Collision" type="Solid" x="2248" y="224" width="18.5" height="54.5"/>
   <object id="73" name="Collision" type="Solid" x="2225" y="224.5" width="77" height="34.5"/>
   <object id="74" name="Collision" type="Solid" x="2299.5" y="256" width="4.5" height="7"/>
   <object id="75" name="Collision" type="Solid" x="2302" y="259" width="5" height="11.5"/>
@@ -423,25 +422,25 @@
   <object id="235" name="Player" type="PlayerSpawn" x="47" y="233.5">
    <point/>
   </object>
-  <object id="236" name="Enemy1" type="EnemySpawn" x="577.5" y="160">
+  <object id="236" name="Enemy1" type="EnemySpawn" x="356.167" y="255.333">
    <point/>
   </object>
-  <object id="237" name="Enemy2" type="EnemySpawn" x="1222.5" y="287">
+  <object id="237" name="Enemy2" type="EnemySpawn" x="1151.17" y="302.333">
    <point/>
   </object>
-  <object id="238" name="Enemy3" type="EnemySpawn" x="1840.5" y="99">
+  <object id="238" name="Enemy3" type="EnemySpawn" x="1773.83" y="107">
    <point/>
   </object>
-  <object id="239" name="Enemy4" type="EnemySpawn" x="2116.5" y="125">
+  <object id="239" name="Enemy4" type="EnemySpawn" x="2057.17" y="137">
    <point/>
   </object>
-  <object id="240" name="Enemy5" type="EnemySpawn" x="2774" y="146.5">
+  <object id="240" name="Enemy5" type="EnemySpawn" x="2794" y="172.5">
    <point/>
   </object>
-  <object id="241" name="Enemy6" type="EnemySpawn" x="3027.5" y="141.5">
+  <object id="241" name="Enemy6" type="EnemySpawn" x="2991.5" y="172.167">
    <point/>
   </object>
-  <object id="242" name="Enemy7" type="EnemySpawn" x="3685" y="150.5">
+  <object id="242" name="Enemy7" type="EnemySpawn" x="3646.33" y="173.167">
    <point/>
   </object>
   <object id="243" name="Enemy8" type="EnemySpawn" x="4203.5" y="205">
@@ -450,7 +449,7 @@
   <object id="244" name="Enemy9" type="EnemySpawn" x="4114.5" y="80">
    <point/>
   </object>
-  <object id="245" name="Enemy10" type="EnemySpawn" x="4733.5" y="121">
+  <object id="245" name="Enemy10" type="EnemySpawn" x="4754.83" y="135">
    <point/>
   </object>
   <object id="246" name="Enemy11" type="EnemySpawn" x="5336" y="163.5">
