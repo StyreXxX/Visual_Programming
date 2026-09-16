@@ -16,7 +16,8 @@ public class Player extends Entity {
     private Animation<TextureRegion> staffWalkAnim, staffAttackAnim, idleAnim;
     // private TextureRegion staffIdleFrame;
 
-    private boolean hasStaff = false;
+    private boolean hasUnlockedStaff = false;
+    private int equippedWeapon = 1; // 1 = Sword, 2 = Staff
     private boolean inWater = false;
     private boolean hasDealtMeleeDamage = false;
 
@@ -53,11 +54,36 @@ public class Player extends Entity {
     }
 
     public void equipStaff() {
-        this.hasStaff = true;
+        unlockStaff();
+    }
+
+    public void unlockStaff() {
+        this.hasUnlockedStaff = true;
+        this.equippedWeapon = 2;
     }
 
     public boolean hasStaff() {
-        return hasStaff;
+        return hasUnlockedStaff;
+    }
+
+    public boolean hasUnlockedStaff() {
+        return hasUnlockedStaff;
+    }
+
+    public int getEquippedWeapon() {
+        return equippedWeapon;
+    }
+
+    public void setEquippedWeapon(int slot) {
+        if (slot == 1) {
+            this.equippedWeapon = 1;
+        } else if (slot == 2 && hasUnlockedStaff) {
+            this.equippedWeapon = 2;
+        }
+    }
+
+    public boolean isStaffEquipped() {
+        return equippedWeapon == 2;
     }
 
     public boolean hasDealtMeleeDamage() {
@@ -69,7 +95,7 @@ public class Player extends Entity {
     }
 
     public boolean canDealMeleeDamage() {
-        return isAttacking && !hasStaff && !hasDealtMeleeDamage && stateTime >= 0.08f && stateTime <= 0.45f;
+        return isAttacking && !isStaffEquipped() && !hasDealtMeleeDamage && stateTime >= 0.08f && stateTime <= 0.45f;
     }
 
     public Rectangle getMeleeHitbox() {
@@ -124,6 +150,14 @@ public class Player extends Entity {
         float currentSpeed = inWater ? PLAYER_SPEED * 0.4f : PLAYER_SPEED;
 
         if (!isAttacking) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1) || Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_1)) {
+                equippedWeapon = 1;
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2) || Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_2)) {
+                if (hasUnlockedStaff) {
+                    equippedWeapon = 2;
+                }
+            }
+
             if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
                 bounds.x -= currentSpeed * delta;
                 facingRight = false;
@@ -140,13 +174,13 @@ public class Player extends Entity {
                 isAttacking = true;
                 stateTime = 0;
                 hasDealtMeleeDamage = false;
-                if (hasStaff) {
+                if (isStaffEquipped()) {
                     spawnProjectile(projectiles);
                 }
             }
         }
 
-        Animation<TextureRegion> currentAttackAnim = hasStaff ? staffAttackAnim : attackAnim;
+        Animation<TextureRegion> currentAttackAnim = isStaffEquipped() ? staffAttackAnim : attackAnim;
         if (isAttacking && currentAttackAnim.isAnimationFinished(stateTime)) {
             isAttacking = false;
             hasDealtMeleeDamage = false;
@@ -167,13 +201,13 @@ public class Player extends Entity {
         if (isDead) {
             currentFrame = deathAnim.getKeyFrame(stateTime, false);
         } else if (isAttacking) {
-            currentFrame = (hasStaff ? staffAttackAnim : attackAnim).getKeyFrame(stateTime, false);
+            currentFrame = (isStaffEquipped() ? staffAttackAnim : attackAnim).getKeyFrame(stateTime, false);
         } else if (velocityY != 0 && !inWater) {
-            currentFrame = (hasStaff ? staffWalkAnim : walkAnim).getKeyFrame(0);
+            currentFrame = (isStaffEquipped() ? staffWalkAnim : walkAnim).getKeyFrame(0);
         } else if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            currentFrame = (hasStaff ? staffWalkAnim : walkAnim).getKeyFrame(stateTime, true);
+            currentFrame = (isStaffEquipped() ? staffWalkAnim : walkAnim).getKeyFrame(stateTime, true);
         } else {
-            currentFrame = hasStaff ? staffWalkAnim.getKeyFrame(0) : idleAnim.getKeyFrame(stateTime, true);
+            currentFrame = isStaffEquipped() ? staffWalkAnim.getKeyFrame(0) : idleAnim.getKeyFrame(stateTime, true);
         }
 
         // Submerge logic: slice the bottom 40% of the sprite

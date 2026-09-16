@@ -9,6 +9,8 @@ public class AssetLoader {
     public Texture shopTexture;
     public Texture soulTexture;
     public Texture staffDisplayTexture;
+    public Texture swordIconTexture;
+    public Texture staffSlotTexture;
     public Texture swordProjectileTexture;
     public Texture staffProjectileTexture;
     public Texture keyTexture;
@@ -55,6 +57,8 @@ public class AssetLoader {
         shopTexture = new Texture(Gdx.files.internal("ui/shop.png"));
         soulTexture = new Texture(Gdx.files.internal("ui/soulCurrency.png"));
         staffDisplayTexture = new Texture(Gdx.files.internal("ui/magicStaff.png"));
+        swordIconTexture = new Texture(Gdx.files.internal("ui/sword.png"));
+        staffSlotTexture = new Texture(Gdx.files.internal("ui/staff_slot_icon.png"));
 
         // Player
         playerWalkSheet = new Texture(Gdx.files.internal("characters/player/MainCharacterWalking.png"));
@@ -112,6 +116,8 @@ public class AssetLoader {
         if (shopTexture != null) shopTexture.dispose();
         if (soulTexture != null) soulTexture.dispose();
         if (staffDisplayTexture != null) staffDisplayTexture.dispose();
+        if (swordIconTexture != null) swordIconTexture.dispose();
+        if (staffSlotTexture != null) staffSlotTexture.dispose();
         if (swordProjectileTexture != null) swordProjectileTexture.dispose();
         if (staffProjectileTexture != null) staffProjectileTexture.dispose();
         if (keyTexture != null) keyTexture.dispose();

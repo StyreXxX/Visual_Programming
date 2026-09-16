@@ -71,6 +71,59 @@ public class HUD {
         }
     }
 
+    public void drawWeaponHotbarSlots(Player player, boolean isGameOver, boolean isShopOpen, Boss boss) {
+        if (isGameOver || isShopOpen || boss.isDead()) return;
+
+        float slotSize = 60f;
+        float gap = 8f;
+        float totalW = slotSize * 2 + gap;
+        float startX = (1280f - totalW) / 2f;
+        float startY = 18f;
+
+        int equipped = player.getEquippedWeapon();
+
+        for (int i = 0; i < 2; i++) {
+            float sx = startX + i * (slotSize + gap);
+            float sy = startY;
+            boolean isSelected = (equipped == (i + 1));
+
+            // Outer drop shadow / dark outline
+            shapeRenderer.setColor(0.06f, 0.06f, 0.08f, 0.95f);
+            shapeRenderer.rect(sx - 4, sy - 4, slotSize + 8, slotSize + 8);
+
+            // Beveled metal frame
+            shapeRenderer.setColor(0.40f, 0.40f, 0.44f, 1f);
+            shapeRenderer.rect(sx - 2, sy - 2, slotSize + 4, slotSize + 4);
+
+            // Top & Left highlight edge
+            shapeRenderer.setColor(0.70f, 0.70f, 0.74f, 1f);
+            shapeRenderer.rectLine(sx - 2, sy + slotSize + 1, sx + slotSize + 2, sy + slotSize + 1, 2);
+            shapeRenderer.rectLine(sx - 2, sy - 2, sx - 2, sy + slotSize + 1, 2);
+
+            // Bottom & Right shadow edge
+            shapeRenderer.setColor(0.20f, 0.20f, 0.24f, 1f);
+            shapeRenderer.rectLine(sx - 2, sy - 2, sx + slotSize + 2, sy - 2, 2);
+            shapeRenderer.rectLine(sx + slotSize + 1, sy - 2, sx + slotSize + 1, sy + slotSize + 1, 2);
+
+            // Inset dark slot interior
+            shapeRenderer.setColor(0.12f, 0.13f, 0.10f, 0.95f);
+            shapeRenderer.rect(sx, sy, slotSize, slotSize);
+
+            // Active weapon selection highlight border
+            if (isSelected) {
+                shapeRenderer.setColor(1f, 0.95f, 0.55f, 1f);
+                shapeRenderer.rectLine(sx - 3, sy - 3, sx + slotSize + 3, sy - 3, 3);
+                shapeRenderer.rectLine(sx - 3, sy + slotSize + 3, sx + slotSize + 3, sy + slotSize + 3, 3);
+                shapeRenderer.rectLine(sx - 3, sy - 3, sx - 3, sy + slotSize + 3, 3);
+                shapeRenderer.rectLine(sx + slotSize + 3, sy - 3, sx + slotSize + 3, sy + slotSize + 3, 3);
+
+                // Subtle inner glow
+                shapeRenderer.setColor(1f, 1f, 1f, 0.12f);
+                shapeRenderer.rect(sx, sy, slotSize, slotSize);
+            }
+        }
+    }
+
     public void drawOverlays(boolean isGameOver, boolean isShopOpen, Boss boss) {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -116,10 +169,10 @@ public class HUD {
         Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
-    public void drawTextAndIcons(boolean isGameOver, boolean isShopOpen, Boss boss, int playerSouls, int playerKeys, int staffCost, String shopMessage, int levelIndex) {
+    public void drawTextAndIcons(boolean isGameOver, boolean isShopOpen, Boss boss, int playerSouls, int playerKeys, int staffCost, String shopMessage, int levelIndex, Player player) {
         batch.begin();
 
-        if (!isGameOver && !boss.isDead()) {
+        if (!isGameOver && !boss.isDead() && !isShopOpen) {
             batch.draw(assets.shopTexture, 1150, 580, 100, 100);
 
             batch.draw(assets.soulTexture, 1120, 30, 50, 50);
@@ -142,6 +195,29 @@ public class HUD {
                 } else {
                     font.draw(batch, "THE GUARDIAN", 555, 712);
                 }
+            }
+
+            // Weapon Hotbar icons and numbers
+            float slotSize = 60f;
+            float gap = 8f;
+            float totalW = slotSize * 2 + gap;
+            float startX = (1280f - totalW) / 2f;
+            float startY = 18f;
+
+            // Slot 1: Sword
+            batch.draw(assets.swordIconTexture, startX + 6, startY + 6, 48, 48);
+            font.setColor(player.getEquippedWeapon() == 1 ? Color.GOLD : Color.LIGHT_GRAY);
+            font.draw(batch, "1", startX + 8, startY + 54);
+
+            // Slot 2: Staff
+            float slot2X = startX + slotSize + gap;
+            if (player.hasUnlockedStaff()) {
+                batch.draw(assets.staffSlotTexture, slot2X + 6, startY + 6, 48, 48);
+                font.setColor(player.getEquippedWeapon() == 2 ? Color.GOLD : Color.LIGHT_GRAY);
+                font.draw(batch, "2", slot2X + 8, startY + 54);
+            } else {
+                font.setColor(0.4f, 0.4f, 0.45f, 0.5f);
+                font.draw(batch, "2", slot2X + 8, startY + 54);
             }
         }
 

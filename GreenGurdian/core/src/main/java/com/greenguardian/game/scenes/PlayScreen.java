@@ -371,12 +371,12 @@ public class PlayScreen extends BaseScreen {
             }
         } else if (gameState == GameState.SHOP) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
-                if (player.hasStaff()) {
+                if (player.hasUnlockedStaff()) {
                     shopMessage = "ALREADY OWNED!";
                 } else if (playerSouls >= STAFF_COST) {
                     playerSouls -= STAFF_COST;
-                    player.equipStaff();
-                    shopMessage = "PURCHASE SUCCESSFUL!";
+                    player.unlockStaff();
+                    shopMessage = "PURCHASE SUCCESSFUL! [Press 1 or 2 to Switch]";
                 } else {
                     shopMessage = "NOT ENOUGH SOULS!";
                 }
@@ -440,12 +440,13 @@ public class PlayScreen extends BaseScreen {
 
         // These HUD calls will compile perfectly now that activeBoss is a type of Boss
         hud.drawHealthBars(player, activeBoss);
+        hud.drawWeaponHotbarSlots(player, gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss);
         shapeRenderer.end();
 
         hud.drawOverlays(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss);
 
         batch.setProjectionMatrix(hudCamera.combined);
-        hud.drawTextAndIcons(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss, playerSouls, playerKeys, STAFF_COST, shopMessage, levelIndex);
+        hud.drawTextAndIcons(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss, playerSouls, playerKeys, STAFF_COST, shopMessage, levelIndex, player);
 
         if (gameState == GameState.PAUSE || gameState == GameState.OPTIONS) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
