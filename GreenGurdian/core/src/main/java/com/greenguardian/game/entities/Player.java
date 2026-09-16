@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapObjects;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.greenguardian.game.assets.AssetLoader;
 
@@ -17,6 +18,7 @@ public class Player extends Entity {
 
     private boolean hasStaff = false;
     private boolean inWater = false;
+    private boolean hasDealtMeleeDamage = false;
 
     private final float JUMP_SPEED = 1000f;
     private final float PLAYER_SPEED = 500f;
@@ -56,6 +58,25 @@ public class Player extends Entity {
 
     public boolean hasStaff() {
         return hasStaff;
+    }
+
+    public boolean hasDealtMeleeDamage() {
+        return hasDealtMeleeDamage;
+    }
+
+    public void setDealtMeleeDamage(boolean dealt) {
+        this.hasDealtMeleeDamage = dealt;
+    }
+
+    public boolean canDealMeleeDamage() {
+        return isAttacking && !hasStaff && !hasDealtMeleeDamage && stateTime >= 0.08f && stateTime <= 0.45f;
+    }
+
+    public Rectangle getMeleeHitbox() {
+        float reachWidth = 70f;
+        float rx = facingRight ? bounds.x : bounds.x - reachWidth;
+        float rw = bounds.width + reachWidth;
+        return new Rectangle(rx, bounds.y - 10f, rw, bounds.height + 20f);
     }
 
     public void update(float delta, Array<Projectile> projectiles, MapObjects blocks, MapObjects waterZones, float scale) {
@@ -118,13 +139,17 @@ public class Player extends Entity {
             if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
                 isAttacking = true;
                 stateTime = 0;
-                spawnProjectile(projectiles);
+                hasDealtMeleeDamage = false;
+                if (hasStaff) {
+                    spawnProjectile(projectiles);
+                }
             }
         }
 
         Animation<TextureRegion> currentAttackAnim = hasStaff ? staffAttackAnim : attackAnim;
         if (isAttacking && currentAttackAnim.isAnimationFinished(stateTime)) {
             isAttacking = false;
+            hasDealtMeleeDamage = false;
         }
     }
 
@@ -132,8 +157,7 @@ public class Player extends Entity {
         float px = facingRight ? bounds.x + 50 : bounds.x - 20;
         float py = bounds.y + 30;
 
-        int projType = hasStaff ? 2 : 1;
-        projectiles.add(new Projectile(px, py, facingRight, projType));
+        projectiles.add(new Projectile(px, py, facingRight, 2));
     }
 
     @Override

@@ -135,6 +135,10 @@ public abstract class Entity {
         return isDead;
     }
 
+    public boolean isAttacking() {
+        return isAttacking;
+    }
+
     public int getHealth() {
         return health;
     }

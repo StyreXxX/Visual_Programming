@@ -472,6 +472,31 @@ public class PlayScreen extends BaseScreen {
 
         for (Enemy e : enemies) e.update(delta, player, mapBlocks, SCALE_FACTOR);
 
+        // Sword melee attack check (only applies when player swings sword)
+        if (player.canDealMeleeDamage()) {
+            Rectangle meleeHitbox = player.getMeleeHitbox();
+            boolean hitAnything = false;
+
+            if (!activeBoss.isDead() && meleeHitbox.overlaps(activeBoss.getBounds())) {
+                activeBoss.takeDamage(1);
+                hitAnything = true;
+            }
+
+            for (Enemy e : enemies) {
+                if (!e.isDead() && meleeHitbox.overlaps(e.getBounds())) {
+                    e.takeDamage(1);
+                    if (e.isDead()) {
+                        playerSouls += 15;
+                    }
+                    hitAnything = true;
+                }
+            }
+
+            if (hitAnything) {
+                player.setDealtMeleeDamage(true);
+            }
+        }
+
         for (int i = mapSouls.size - 1; i >= 0; i--) {
             Rectangle s = mapSouls.get(i);
             if (player.getBounds().overlaps(s)) {
