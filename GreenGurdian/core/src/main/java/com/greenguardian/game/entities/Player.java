@@ -109,6 +109,32 @@ public class Player extends Entity {
         return inWater || waterDebuffTimer > 0f;
     }
 
+    public float getWaterDebuffTimer() {
+        return waterDebuffTimer;
+    }
+
+    private float lastDamageTaken = 0f;
+    private boolean justTookDamage = false;
+
+    @Override
+    public void takeDamage(float amount) {
+        super.takeDamage(amount);
+        this.lastDamageTaken = amount;
+        this.justTookDamage = true;
+    }
+
+    public boolean pollJustTookDamage() {
+        if (justTookDamage) {
+            justTookDamage = false;
+            return true;
+        }
+        return false;
+    }
+
+    public float getLastDamageTaken() {
+        return lastDamageTaken;
+    }
+
     public float getAttackDamageMultiplier() {
         return isWaterDebuffed() ? 0.5f : 1.0f;
     }

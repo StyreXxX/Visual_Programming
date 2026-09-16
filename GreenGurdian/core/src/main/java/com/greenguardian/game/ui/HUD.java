@@ -5,9 +5,18 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.MapObjects;
+import com.badlogic.gdx.maps.objects.PolygonMapObject;
+import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.greenguardian.game.assets.AssetLoader;
 import com.greenguardian.game.entities.Boss;
+import com.greenguardian.game.entities.Enemy;
 import com.greenguardian.game.entities.Player;
 
 public class HUD {
@@ -15,35 +24,156 @@ public class HUD {
     private ShapeRenderer shapeRenderer;
     private BitmapFont font;
     private AssetLoader assets;
+    private float playerGhostHealth = 1000f;
+    private TextureRegion playerPortraitRegion;
+    private com.badlogic.gdx.graphics.g2d.GlyphLayout glyphLayout = new com.badlogic.gdx.graphics.g2d.GlyphLayout();
 
     public HUD(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font, AssetLoader assets) {
         this.batch = batch;
         this.shapeRenderer = shapeRenderer;
         this.font = font;
         this.assets = assets;
+
+        if (font != null && font.getRegion() != null && font.getRegion().getTexture() != null) {
+            font.getRegion().getTexture().setFilter(com.badlogic.gdx.graphics.Texture.TextureFilter.Linear, com.badlogic.gdx.graphics.Texture.TextureFilter.Linear);
+        }
+
+        if (assets.playerStandSheet != null) {
+            // Perfectly centered high-res bust of hero (hood, face, chest, shoulders centered)
+            this.playerPortraitRegion = new TextureRegion(assets.playerStandSheet, 414, 4, 150, 150);
+        }
     }
 
     public void drawHealthBars(Player player, Boss boss) {
-        float pX = 20f, pY = 665f, pW = 250f, pH = 24f;
+        drawHealthBars(player, boss, 1);
+    }
 
-        shapeRenderer.setColor(0.08f, 0.08f, 0.1f, 0.9f);
-        shapeRenderer.rect(pX - 4, pY - 4, pW + 8, pH + 8);
+    public void drawHealthBars(Player player, Boss boss, int levelIndex) {
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
-        shapeRenderer.setColor(0.85f, 0.7f, 0.2f, 1f);
-        shapeRenderer.rectLine(pX - 4, pY - 4, pX + pW + 4, pY - 4, 2);
-        shapeRenderer.rectLine(pX - 4, pY + pH + 4, pX + pW + 4, pY + pH + 4, 2);
-        shapeRenderer.rectLine(pX - 4, pY - 4, pX - 4, pY + pH + 4, 2);
-        shapeRenderer.rectLine(pX + pW + 4, pY - 4, pX + pW + 4, pY + pH + 4, 2);
+        float currentHP = player.getHealth();
+        float maxHP = player.getMaxHealth();
 
-        shapeRenderer.setColor(0.3f, 0.05f, 0.05f, 1f);
+        // Ghost health bar catch-up interpolation
+        if (currentHP < playerGhostHealth) {
+            playerGhostHealth = Math.max(currentHP, playerGhostHealth - 220f * Gdx.graphics.getDeltaTime());
+        } else {
+            playerGhostHealth = currentHP;
+        }
+
+        // ================= UNIFIED RPG STATUS FRAME (Master Chassis) =================
+        float frameX = 18f, frameY = 620f, frameW = 392f, frameH = 82f;
+
+        // Soft Frame Outer Drop Shadow
+        shapeRenderer.setColor(0f, 0f, 0f, 0.55f);
+        shapeRenderer.rect(frameX - 3, frameY - 3, frameW + 6, frameH + 6);
+
+        // Deep Gunmetal/Obsidian Plate Base
+        shapeRenderer.setColor(0.08f, 0.10f, 0.13f, 0.94f);
+        shapeRenderer.rect(frameX, frameY, frameW, frameH);
+
+        // Antique Gold Frame Border
+        shapeRenderer.setColor(0.72f, 0.58f, 0.25f, 1f);
+        shapeRenderer.rectLine(frameX, frameY, frameX + frameW, frameY, 1.8f);
+        shapeRenderer.rectLine(frameX, frameY + frameH, frameX + frameW, frameY + frameH, 1.8f);
+        shapeRenderer.rectLine(frameX, frameY, frameX, frameY + frameH, 1.8f);
+        shapeRenderer.rectLine(frameX + frameW, frameY, frameX + frameW, frameY + frameH, 1.8f);
+
+        // Subtle Inner Chamfer Accent Line
+        shapeRenderer.setColor(0.25f, 0.30f, 0.38f, 0.45f);
+        shapeRenderer.rectLine(frameX + 2, frameY + 2, frameX + frameW - 2, frameY + 2, 1f);
+        shapeRenderer.rectLine(frameX + 2, frameY + frameH - 2, frameX + frameW - 2, frameY + frameH - 2, 1f);
+        shapeRenderer.rectLine(frameX + 2, frameY + 2, frameX + 2, frameY + frameH - 2, 1f);
+        shapeRenderer.rectLine(frameX + frameW - 2, frameY + 2, frameX + frameW - 2, frameY + frameH - 2, 1f);
+
+        // ================= INTEGRATED PORTRAIT SOCKET =================
+        float portX = 26f, portY = 626f, portW = 70f, portH = 70f;
+
+        // Recessed Dark Well Interior
+        shapeRenderer.setColor(0.04f, 0.05f, 0.07f, 1f);
+        shapeRenderer.rect(portX, portY, portW, portH);
+
+        // Polished Gold Inner Rim
+        shapeRenderer.setColor(0.85f, 0.72f, 0.30f, 1f);
+        shapeRenderer.rectLine(portX, portY, portX + portW, portY, 1.5f);
+        shapeRenderer.rectLine(portX, portY + portH, portX + portW, portY + portH, 1.5f);
+        shapeRenderer.rectLine(portX, portY, portX, portY + portH, 1.5f);
+        shapeRenderer.rectLine(portX + portW, portY, portX + portW, portY + portH, 1.5f);
+
+        // ================= PLAYER HEALTH BAR =================
+        float pX = 106f, pY = 648f, pW = 290f, pH = 18f;
+
+        // Health Bar Recessed Shadow
+        shapeRenderer.setColor(0f, 0f, 0f, 0.6f);
+        shapeRenderer.rect(pX - 2, pY - 2, pW + 4, pH + 4);
+
+        // Dark Background (Empty Health Trough)
+        shapeRenderer.setColor(0.18f, 0.05f, 0.05f, 0.95f);
         shapeRenderer.rect(pX, pY, pW, pH);
 
-        float pRatio = (float) player.getHealth() / player.getMaxHealth();
-        shapeRenderer.setColor(0.1f, 0.85f, 0.25f, 1f);
-        shapeRenderer.rect(pX, pY, Math.max(0, pW * pRatio), pH);
+        // Catch-up Ghost Health Bar (Warm Amber linger bar)
+        if (playerGhostHealth > currentHP) {
+            float ghostRatio = Math.min(1.0f, Math.max(0f, playerGhostHealth / maxHP));
+            shapeRenderer.setColor(0.95f, 0.62f, 0.16f, 0.90f);
+            shapeRenderer.rect(pX, pY, pW * ghostRatio, pH);
+        }
 
-        shapeRenderer.setColor(1f, 1f, 1f, 0.2f);
-        shapeRenderer.rect(pX, pY + pH - 4, Math.max(0, pW * pRatio), 4);
+        // Active Health Bar (Rich Emerald Green)
+        float pRatio = Math.min(1.0f, Math.max(0f, currentHP / maxHP));
+        shapeRenderer.setColor(0.12f, 0.78f, 0.34f, 1f);
+        shapeRenderer.rect(pX, pY, pW * pRatio, pH);
+
+        // Soft Translucent Gloss Highlight (Top 45%)
+        shapeRenderer.setColor(1f, 1f, 1f, 0.18f);
+        shapeRenderer.rect(pX, pY + pH * 0.55f, pW * pRatio, pH * 0.45f);
+
+        // Clean Golden Trim Frame
+        shapeRenderer.setColor(0.65f, 0.52f, 0.20f, 1f);
+        shapeRenderer.rectLine(pX, pY, pX + pW, pY, 1.5f);
+        shapeRenderer.rectLine(pX, pY + pH, pX + pW, pY + pH, 1.5f);
+        shapeRenderer.rectLine(pX, pY, pX, pY + pH, 1.5f);
+        shapeRenderer.rectLine(pX + pW, pY, pX + pW, pY + pH, 1.5f);
+
+        // ================= STATUS EFFECT BADGES (Row 3, Underneath HP) =================
+        float badgeX = 106f;
+        float badgeY = 626f;
+        float badgeH = 16f;
+
+        if (player.isWaterDebuffed()) {
+            float bWidth = 110f;
+            shapeRenderer.setColor(0.08f, 0.18f, 0.32f, 0.90f);
+            shapeRenderer.rect(badgeX, badgeY, bWidth, badgeH);
+            shapeRenderer.setColor(0.25f, 0.65f, 0.95f, 0.90f);
+            shapeRenderer.rectLine(badgeX, badgeY, badgeX + bWidth, badgeY, 1.2f);
+            shapeRenderer.rectLine(badgeX, badgeY + badgeH, badgeX + bWidth, badgeY + badgeH, 1.2f);
+            shapeRenderer.rectLine(badgeX, badgeY, badgeX, badgeY + badgeH, 1.2f);
+            shapeRenderer.rectLine(badgeX + bWidth, badgeY, badgeX + bWidth, badgeY + badgeH, 1.2f);
+            badgeX += bWidth + 8f;
+        }
+
+        if (player.getDamageStoneCount() > 0) {
+            float bWidth = 96f;
+            shapeRenderer.setColor(0.28f, 0.20f, 0.08f, 0.90f);
+            shapeRenderer.rect(badgeX, badgeY, bWidth, badgeH);
+            shapeRenderer.setColor(0.95f, 0.75f, 0.20f, 0.90f);
+            shapeRenderer.rectLine(badgeX, badgeY, badgeX + bWidth, badgeY, 1.2f);
+            shapeRenderer.rectLine(badgeX, badgeY + badgeH, badgeX + bWidth, badgeY + badgeH, 1.2f);
+            shapeRenderer.rectLine(badgeX, badgeY, badgeX, badgeY + badgeH, 1.2f);
+            shapeRenderer.rectLine(badgeX + bWidth, badgeY, badgeX + bWidth, badgeY + badgeH, 1.2f);
+            badgeX += bWidth + 8f;
+        }
+
+        if (player.hasSoulMagnet()) {
+            float bWidth = 82f;
+            shapeRenderer.setColor(0.22f, 0.10f, 0.30f, 0.90f);
+            shapeRenderer.rect(badgeX, badgeY, bWidth, badgeH);
+            shapeRenderer.setColor(0.75f, 0.45f, 0.95f, 0.90f);
+            shapeRenderer.rectLine(badgeX, badgeY, badgeX + bWidth, badgeY, 1.2f);
+            shapeRenderer.rectLine(badgeX, badgeY + badgeH, badgeX + bWidth, badgeY + badgeH, 1.2f);
+            shapeRenderer.rectLine(badgeX, badgeY, badgeX, badgeY + badgeH, 1.2f);
+            shapeRenderer.rectLine(badgeX + bWidth, badgeY, badgeX + bWidth, badgeY + badgeH, 1.2f);
+        }
 
         if (!boss.isDead() && boss.isAwake()) {
             float bW = 500f, bH = 22f;
@@ -124,6 +254,211 @@ public class HUD {
         }
     }
 
+    public void drawMinimap(ShapeRenderer shapeRenderer, float mapW, float mapH, Player player, Array<Enemy> enemies, Boss boss, Array<Rectangle> souls, Array<Rectangle> keys, OrthographicCamera camera, MapObjects mapBlocks, float scaleFactor, boolean isHidden) {
+        if (isHidden) return;
+        if (mapW <= 0 || mapH <= 0 || player == null) return;
+
+        // Minimap Top-Right Position (200w x 92h - Landscape 1:1 Aspect Ratio)
+        float mx = 1060f;
+        float my = 608f;
+        float mw = 200f;
+        float mh = 92f;
+
+        // Soft Outer Drop Shadow
+        shapeRenderer.setColor(0f, 0f, 0f, 0.55f);
+        shapeRenderer.rect(mx - 3, my - 3, mw + 6, mh + 6);
+
+        // Dark Gunmetal / Obsidian Radar Plate Base
+        shapeRenderer.setColor(0.06f, 0.08f, 0.11f, 0.94f);
+        shapeRenderer.rect(mx, my, mw, mh);
+
+        // Radar Active Viewport Area (Within inner margins)
+        float rx = mx + 4f;
+        float ry = my + 14f; // 12px at bottom reserved for Level Progression Track
+        float rw = mw - 8f;  // 192f
+        float rh = mh - 26f; // 66f
+
+        // Recessed Dark Radar Well
+        shapeRenderer.setColor(0.04f, 0.05f, 0.07f, 1f);
+        shapeRenderer.rect(rx, ry, rw, rh);
+
+        // Subtle Grid Lines
+        shapeRenderer.setColor(0.18f, 0.22f, 0.28f, 0.40f);
+        shapeRenderer.rectLine(rx + rw / 2f, ry, rx + rw / 2f, ry + rh, 1f);
+        shapeRenderer.rectLine(rx, ry + rh / 2f, rx + rw, ry + rh / 2f, 1f);
+
+        // World view range: 1700 horizontal world pixels centered around player/camera
+        float camX = (camera != null) ? camera.position.x : player.getBounds().x;
+        float camY = (camera != null) ? camera.position.y : player.getBounds().y;
+        float viewRangeX = 1700f;
+        float viewRangeY = (viewRangeX / rw) * rh; // ~584 world pixels vertically
+
+        float minWorldX = camX - (viewRangeX / 2f);
+        float maxWorldX = camX + (viewRangeX / 2f);
+        float minWorldY = camY - (viewRangeY / 2f);
+        float maxWorldY = camY + (viewRangeY / 2f);
+
+        // ================= DRAW TERRAIN PLATFORMS =================
+        if (mapBlocks != null) {
+            for (MapObject object : mapBlocks) {
+                Rectangle bRect = null;
+                if (object instanceof RectangleMapObject) {
+                    bRect = ((RectangleMapObject) object).getRectangle();
+                } else if (object instanceof PolygonMapObject) {
+                    bRect = ((PolygonMapObject) object).getPolygon().getBoundingRectangle();
+                }
+                if (bRect == null) continue;
+
+                float bx = bRect.x * scaleFactor;
+                float by = bRect.y * scaleFactor;
+                float bw = bRect.width * scaleFactor;
+                float bh = bRect.height * scaleFactor;
+
+                // Quick horizontal and vertical cull
+                if (bx + bw < minWorldX || bx > maxWorldX) continue;
+                if (by + bh < minWorldY || by > maxWorldY) continue;
+
+                // Clip to visible window
+                float clipLeft = Math.max(minWorldX, bx);
+                float clipRight = Math.min(maxWorldX, bx + bw);
+                float clipBottom = Math.max(minWorldY, by);
+                float clipTop = Math.min(maxWorldY, by + bh);
+
+                if (clipRight > clipLeft && clipTop > clipBottom) {
+                    float normX1 = (clipLeft - minWorldX) / viewRangeX;
+                    float normX2 = (clipRight - minWorldX) / viewRangeX;
+                    float normY1 = (clipBottom - minWorldY) / viewRangeY;
+                    float normY2 = (clipTop - minWorldY) / viewRangeY;
+
+                    float dx = rx + normX1 * rw;
+                    float dy = ry + normY1 * rh;
+                    float dw = (normX2 - normX1) * rw;
+                    float dh = (normY2 - normY1) * rh;
+
+                    // Platform Stone/Earth body
+                    shapeRenderer.setColor(0.18f, 0.24f, 0.22f, 0.90f);
+                    shapeRenderer.rect(dx, dy, dw, dh);
+
+                    // Platform Top Moss / Edge Highlight Line
+                    if (by + bh <= maxWorldY) {
+                        shapeRenderer.setColor(0.35f, 0.65f, 0.40f, 0.95f);
+                        shapeRenderer.rect(dx, dy + dh - 1.2f, dw, 1.2f);
+                    }
+                }
+            }
+        }
+
+        // ================= SOULS PICKUPS =================
+        if (souls != null) {
+            shapeRenderer.setColor(0.75f, 0.40f, 0.95f, 0.90f);
+            for (Rectangle s : souls) {
+                if (s.x + s.width >= minWorldX && s.x <= maxWorldX && s.y + s.height >= minWorldY && s.y <= maxWorldY) {
+                    float sx = rx + ((s.x - minWorldX) / viewRangeX) * rw;
+                    float sy = ry + ((s.y - minWorldY) / viewRangeY) * rh;
+                    shapeRenderer.rect(sx - 1.5f, sy - 1.5f, 3f, 3f);
+                }
+            }
+        }
+
+        // ================= KEYS PICKUPS =================
+        if (keys != null) {
+            shapeRenderer.setColor(1.0f, 0.85f, 0.20f, 1f);
+            for (Rectangle k : keys) {
+                if (k.x + k.width >= minWorldX && k.x <= maxWorldX && k.y + k.height >= minWorldY && k.y <= maxWorldY) {
+                    float kx = rx + ((k.x - minWorldX) / viewRangeX) * rw;
+                    float ky = ry + ((k.y - minWorldY) / viewRangeY) * rh;
+                    shapeRenderer.rect(kx - 2f, ky - 2f, 4f, 4f);
+                }
+            }
+        }
+
+        // ================= ENEMIES =================
+        if (enemies != null) {
+            shapeRenderer.setColor(0.95f, 0.22f, 0.22f, 0.95f);
+            for (Enemy e : enemies) {
+                if (e != null && !e.isDead()) {
+                    Rectangle eb = e.getBounds();
+                    if (eb.x + eb.width >= minWorldX && eb.x <= maxWorldX && eb.y + eb.height >= minWorldY && eb.y <= maxWorldY) {
+                        float ex = rx + ((eb.x - minWorldX) / viewRangeX) * rw;
+                        float ey = ry + ((eb.y - minWorldY) / viewRangeY) * rh;
+                        shapeRenderer.rect(ex - 2f, ey - 2f, 4f, 4f);
+                    }
+                }
+            }
+        }
+
+        // ================= BOSS TRACKER =================
+        if (boss != null && !boss.isDead()) {
+            Rectangle bb = boss.getBounds();
+            if (bb.x + bb.width >= minWorldX && bb.x <= maxWorldX && bb.y + bb.height >= minWorldY && bb.y <= maxWorldY) {
+                float bx = rx + ((bb.x - minWorldX) / viewRangeX) * rw;
+                float by = ry + ((bb.y - minWorldY) / viewRangeY) * rh;
+                shapeRenderer.setColor(0.95f, 0.15f, 0.15f, 1f);
+                shapeRenderer.rect(bx - 3.5f, by - 3.5f, 7f, 7f);
+                shapeRenderer.setColor(1.0f, 0.80f, 0.10f, 1f);
+                shapeRenderer.rect(bx - 2f, by - 2f, 4f, 4f);
+            } else if (bb.x > maxWorldX) {
+                // Boss is ahead down the level: Draw indicator arrow on right edge of radar
+                float indX = rx + rw - 6f;
+                float indY = ry + rh / 2f;
+                shapeRenderer.setColor(1.0f, 0.70f, 0.15f, 1f);
+                shapeRenderer.rect(indX, indY - 4f, 4f, 8f);
+            }
+        }
+
+        // ================= PLAYER BLIP (Center Beacon) =================
+        float pWorldX = player.getBounds().x + player.getBounds().width / 2f;
+        float pWorldY = player.getBounds().y + player.getBounds().height / 2f;
+        float px = rx + ((pWorldX - minWorldX) / viewRangeX) * rw;
+        float py = ry + ((pWorldY - minWorldY) / viewRangeY) * rh;
+
+        // Player Outer Emerald Aura
+        shapeRenderer.setColor(0.10f, 0.85f, 0.35f, 1f);
+        shapeRenderer.rect(px - 3.5f, py - 3.5f, 7f, 7f);
+        // Player Glowing Core
+        shapeRenderer.setColor(1f, 1f, 1f, 1f);
+        shapeRenderer.rect(px - 1.5f, py - 1.5f, 3f, 3f);
+
+        // ================= LEVEL PROGRESSION STRIP (Bottom of Frame) =================
+        float trackX = mx + 6f;
+        float trackY = my + 4f;
+        float trackW = mw - 12f;
+        float trackH = 4f;
+
+        // Track Background
+        shapeRenderer.setColor(0.12f, 0.14f, 0.18f, 0.95f);
+        shapeRenderer.rect(trackX, trackY, trackW, trackH);
+
+        // Boss Target Marker at right end of track
+        shapeRenderer.setColor(0.95f, 0.25f, 0.25f, 1f);
+        shapeRenderer.rect(trackX + trackW - 3f, trackY - 1f, 3f, 6f);
+
+        // Traversed Progress Fill (Emerald)
+        float progressRatio = Math.min(1.0f, Math.max(0f, pWorldX / mapW));
+        shapeRenderer.setColor(0.15f, 0.75f, 0.35f, 0.90f);
+        shapeRenderer.rect(trackX, trackY, trackW * progressRatio, trackH);
+
+        // Current Player Progress Pip
+        float pipX = trackX + trackW * progressRatio;
+        shapeRenderer.setColor(1f, 1f, 1f, 1f);
+        shapeRenderer.rect(pipX - 1.5f, trackY - 1.5f, 3f, 7f);
+
+        // ================= FRAME BORDERS =================
+        // Outer Gold Border
+        shapeRenderer.setColor(0.75f, 0.60f, 0.22f, 1f);
+        shapeRenderer.rectLine(mx, my, mx + mw, my, 1.8f);
+        shapeRenderer.rectLine(mx, my + mh, mx + mw, my + mh, 1.8f);
+        shapeRenderer.rectLine(mx, my, mx, my + mh, 1.8f);
+        shapeRenderer.rectLine(mx + mw, my, mx + mw, my + mh, 1.8f);
+
+        // Inner Chamfer Line
+        shapeRenderer.setColor(0.25f, 0.30f, 0.38f, 0.45f);
+        shapeRenderer.rectLine(mx + 2, my + 2, mx + mw - 2, my + 2, 1f);
+        shapeRenderer.rectLine(mx + 2, my + mh - 2, mx + mw - 2, my + mh - 2, 1f);
+        shapeRenderer.rectLine(mx + 2, my + 2, mx + 2, my + mh - 2, 1f);
+        shapeRenderer.rectLine(mx + mw - 2, my + 2, mx + mw - 2, my + mh - 2, 1f);
+    }
+
     public void drawOverlays(boolean isGameOver, boolean isShopOpen, Boss boss) {
         drawOverlays(isGameOver, isShopOpen, boss, 0);
     }
@@ -136,13 +471,70 @@ public class HUD {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
         if (isGameOver) {
-            shapeRenderer.setColor(0f, 0f, 0f, 0.65f);
+            // Full background cinematic darken
+            shapeRenderer.setColor(0f, 0f, 0f, 0.82f);
             shapeRenderer.rect(0, 0, 1280, 720);
 
-            shapeRenderer.setColor(0.1f, 0.1f, 0.12f, 0.9f);
-            shapeRenderer.rect(440, 260, 400, 200);
-            shapeRenderer.setColor(0.8f, 0.1f, 0.1f, 1f);
-            shapeRenderer.rect(440, 455, 400, 5);
+            // Center subtle dark crimson aura
+            shapeRenderer.setColor(0.35f, 0.04f, 0.06f, 0.25f);
+            shapeRenderer.rect(340, 180, 600, 360);
+
+            // Modal dimensions (Centered at x=360, y=200, 560x320)
+            float mX = 360f, mY = 200f, mW = 560f, mH = 320f;
+
+            // Modal drop shadow
+            shapeRenderer.setColor(0f, 0f, 0f, 0.65f);
+            shapeRenderer.rect(mX - 4, mY - 4, mW + 8, mH + 8);
+
+            // Modal body (Dark Obsidian plate)
+            shapeRenderer.setColor(0.08f, 0.08f, 0.11f, 0.97f);
+            shapeRenderer.rect(mX, mY, mW, mH);
+
+            // Header Banner (Deep Crimson plate)
+            shapeRenderer.setColor(0.25f, 0.05f, 0.07f, 0.98f);
+            shapeRenderer.rect(mX, mY + mH - 80f, mW, 80f);
+
+            // Top Header Glow Stripe
+            shapeRenderer.setColor(0.95f, 0.25f, 0.25f, 1f);
+            shapeRenderer.rect(mX, mY + mH - 3f, mW, 3f);
+
+            // Outer Antique Gold Frame Border
+            shapeRenderer.setColor(0.82f, 0.68f, 0.25f, 1f);
+            shapeRenderer.rectLine(mX, mY, mX + mW, mY, 2.2f);
+            shapeRenderer.rectLine(mX, mY + mH, mX + mW, mY + mH, 2.2f);
+            shapeRenderer.rectLine(mX, mY, mX, mY + mH, 2.2f);
+            shapeRenderer.rectLine(mX + mW, mY, mX + mW, mY + mH, 2.2f);
+
+            // Inner Ruby Accent Frame Line
+            shapeRenderer.setColor(0.55f, 0.12f, 0.15f, 0.70f);
+            shapeRenderer.rectLine(mX + 4, mY + 4, mX + mW - 4, mY + 4, 1.2f);
+            shapeRenderer.rectLine(mX + 4, mY + mH - 4, mX + mW - 4, mY + mH - 4, 1.2f);
+            shapeRenderer.rectLine(mX + 4, mY + 4, mX + 4, mY + mH - 4, 1.2f);
+            shapeRenderer.rectLine(mX + mW - 4, mY + 4, mX + mW - 4, mY + mH - 4, 1.2f);
+
+            // Header Separator Gold Line
+            shapeRenderer.setColor(0.82f, 0.68f, 0.25f, 0.85f);
+            shapeRenderer.rectLine(mX + 15, mY + mH - 80f, mX + mW - 15, mY + mH - 80f, 1.5f);
+
+            // Interactive Button Pill Box (380x54)
+            float btnW = 380f, btnH = 54f;
+            float btnX = 640f - (btnW / 2f);
+            float btnY = mY + 40f;
+
+            // Button Shadow
+            shapeRenderer.setColor(0f, 0f, 0f, 0.50f);
+            shapeRenderer.rect(btnX - 2, btnY - 2, btnW + 4, btnH + 4);
+
+            // Button Body
+            shapeRenderer.setColor(0.15f, 0.17f, 0.23f, 0.98f);
+            shapeRenderer.rect(btnX, btnY, btnW, btnH);
+
+            // Button Gold Glow Border
+            shapeRenderer.setColor(0.92f, 0.76f, 0.25f, 1f);
+            shapeRenderer.rectLine(btnX, btnY, btnX + btnW, btnY, 2f);
+            shapeRenderer.rectLine(btnX, btnY + btnH, btnX + btnW, btnY + btnH, 2f);
+            shapeRenderer.rectLine(btnX, btnY, btnX, btnY + btnH, 2f);
+            shapeRenderer.rectLine(btnX + btnW, btnY, btnX + btnW, btnY + btnH, 2f);
         } else if (isShopOpen) {
             // Full background darken
             shapeRenderer.setColor(0f, 0f, 0f, 0.80f);
@@ -247,7 +639,22 @@ public class HUD {
         batch.begin();
 
         if (!isGameOver && !boss.isDead() && !isShopOpen) {
-            batch.draw(assets.shopTexture, 1150, 580, 100, 100);
+            // Minimap Header Label & Boss Distance
+            drawShadowedText("RADAR", 1066f, 694f, Color.valueOf("FCD34D"), 0.50f);
+            if (boss != null && !boss.isDead()) {
+                int dist = (int) Math.max(0, (boss.getBounds().x - player.getBounds().x) / 10f);
+                if (dist > 0) {
+                    drawShadowedText("BOSS: " + dist + "m", 1192f, 694f, Color.valueOf("F87171"), 0.48f);
+                }
+            }
+
+            // Mystic Shop Logo (Positioned directly below the minimap, horizontally centered)
+            float shopX = 1118f;
+            float shopY = 502f;
+            float shopW = 84f;
+            float shopH = 84f;
+            batch.draw(assets.shopTexture, shopX, shopY, shopW, shopH);
+            drawShadowedText("[B] Shop", shopX + 11f, shopY - 4f, Color.valueOf("FCD34D"), 0.58f);
 
             batch.draw(assets.soulTexture, 1120, 30, 50, 50);
             font.setColor(Color.valueOf("B47EE5"));
@@ -261,8 +668,45 @@ public class HUD {
                 font.draw(batch, "x " + playerKeys + "/3", 1180, 130);
             }
 
-            font.setColor(Color.WHITE);
-            font.draw(batch, "PLAYER HP", 25, 712);
+            // ================= PLAYER PORTRAIT & TEXT (Top-Left) =================
+            if (playerPortraitRegion != null) {
+                batch.draw(playerPortraitRegion, 28f, 628f, 66f, 66f);
+            }
+
+            // Header Row: Character Title (left) & Numeric HP (right) above the bar
+            drawShadowedText("GREEN GUARDIAN", 106f, 679f, Color.valueOf("FCD34D"), 0.70f);
+
+            // Right-aligned clean HP readout: "HP" in mint emerald + numbers in crisp white
+            float barRightX = 106f + 290f;
+            String hpNumText = (int) player.getHealth() + " / " + (int) player.getMaxHealth();
+            font.getData().setScale(0.68f);
+            glyphLayout.setText(font, "HP " + hpNumText);
+            float totalHpWidth = glyphLayout.width;
+            glyphLayout.setText(font, "HP ");
+            float hpTagWidth = glyphLayout.width;
+            font.getData().setScale(1.0f);
+
+            float hpStartX = barRightX - totalHpWidth;
+            drawShadowedText("HP ", hpStartX, 679f, Color.valueOf("34D399"), 0.68f);
+            drawShadowedText(hpNumText, hpStartX + hpTagWidth, 679f, Color.WHITE, 0.68f);
+
+            // Status Badges Text with shadow (Row 3)
+            float textBadgeX = 106f;
+            if (player.isWaterDebuffed()) {
+                drawShadowedText("SLOW (" + (int) Math.ceil(player.getWaterDebuffTimer()) + "s)", textBadgeX + 6f, 638f, Color.valueOf("67E8F9"), 0.52f);
+                textBadgeX += 110f + 8f;
+            }
+
+            if (player.getDamageStoneCount() > 0) {
+                batch.draw(assets.swordIconTexture, textBadgeX + 4f, 627f, 14f, 14f);
+                drawShadowedText("+" + (player.getDamageStoneCount() * 20) + "% ATK", textBadgeX + 22f, 638f, Color.valueOf("FCD34D"), 0.52f);
+                textBadgeX += 96f + 8f;
+            }
+
+            if (player.hasSoulMagnet()) {
+                batch.draw(assets.soulTexture, textBadgeX + 4f, 627f, 14f, 14f);
+                drawShadowedText("MAGNET", textBadgeX + 22f, 638f, Color.valueOf("C084FC"), 0.52f);
+            }
 
             if (boss.isAwake()) {
                 font.setColor(Color.GOLD);
@@ -394,10 +838,47 @@ public class HUD {
             font.setColor(Color.LIGHT_GRAY);
             font.draw(batch, "Use [W/S] or [UP/DOWN] to select | Press [ENTER] or [1-4] to buy", modalX + 110f, modalY + 34f);
         } else if (isGameOver) {
-            font.setColor(Color.RED);
-            font.draw(batch, "GAME OVER", 550, 410);
-            font.setColor(Color.WHITE);
-            font.draw(batch, "Press ENTER to Restart", 485, 340);
+            float mX = 360f, mY = 200f, mW = 560f, mH = 320f;
+
+            // Grand Cinematic "GAME OVER"
+            String title = "GAME OVER";
+            font.getData().setScale(1.85f);
+            glyphLayout.setText(font, title);
+            float titleX = 640f - (glyphLayout.width / 2f);
+            float titleY = mY + mH - 26f;
+
+            // Soft dark drop shadow
+            font.setColor(0f, 0f, 0f, 0.90f);
+            font.draw(batch, title, titleX + 2.5f, titleY - 2.5f);
+            // High-visibility radiant crimson
+            font.setColor(Color.valueOf("FF4D4D"));
+            font.draw(batch, title, titleX, titleY);
+
+            // Large, clear, high-contrast Lore Subtitle
+            String subtitle = "The Guardian's light has faded in the ancient grove...";
+            font.getData().setScale(0.85f);
+            glyphLayout.setText(font, subtitle);
+            float subX = 640f - (glyphLayout.width / 2f);
+            float subY = mY + mH - 118f;
+            drawShadowedText(subtitle, subX, subY, Color.valueOf("F3F4F6"), 0.85f);
+
+            // Large, clear Encouraging Hint
+            String tip = "Death is not the end. Rise again to reclaim the sacred grove!";
+            font.getData().setScale(0.78f);
+            glyphLayout.setText(font, tip);
+            float tipX = 640f - (glyphLayout.width / 2f);
+            float tipY = subY - 38f;
+            drawShadowedText(tip, tipX, tipY, Color.valueOf("FCD34D"), 0.78f);
+
+            // Prominent Interactive Button Prompt
+            float btnY = mY + 40f;
+            String btnText = "[ ENTER ]  REVIVE & RESTART";
+            font.getData().setScale(0.92f);
+            glyphLayout.setText(font, btnText);
+            float btnTextX = 640f - (glyphLayout.width / 2f);
+            float btnTextY = btnY + 37f;
+            drawShadowedText(btnText, btnTextX, btnTextY, Color.valueOf("FEF08A"), 0.92f);
+            font.getData().setScale(1.0f);
         } else if (boss.isDead()) {
             if (levelIndex == 1) {
                 font.setColor(Color.GOLD);
@@ -417,4 +898,14 @@ public class HUD {
         }
         batch.end();
     }
+
+    private void drawShadowedText(String text, float x, float y, Color color, float scale) {
+        font.getData().setScale(scale);
+        font.setColor(0f, 0f, 0f, 0.85f);
+        font.draw(batch, text, x + 1.2f, y - 1.2f);
+        font.setColor(color);
+        font.draw(batch, text, x, y);
+        font.getData().setScale(1.0f);
+    }
 }
+

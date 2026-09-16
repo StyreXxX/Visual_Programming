@@ -27,6 +27,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 import com.greenguardian.game.GreenGuardianGame;
 import com.greenguardian.game.entities.*;
+import com.greenguardian.game.ui.FloatingText;
 import com.greenguardian.game.ui.HUD;
 
 public class PlayScreen extends BaseScreen {
@@ -48,6 +49,7 @@ public class PlayScreen extends BaseScreen {
     private Array<Projectile> projectiles;
     private Array<Rectangle> mapSouls;
     private Array<Rectangle> mapKeys;
+    private Array<FloatingText> floatingTexts = new Array<>();
 
     private int playerSouls = 140;
     private int playerKeys = 0;
@@ -204,6 +206,7 @@ public class PlayScreen extends BaseScreen {
                 game.playButtonSound();
                 gameState = GameState.OPTIONS;
                 pauseTable.setVisible(false);
+                optionsTable.toFront();
                 optionsTable.setVisible(true);
             }
         });
@@ -261,6 +264,7 @@ public class PlayScreen extends BaseScreen {
                 game.playButtonSound();
                 gameState = GameState.PAUSE;
                 optionsTable.setVisible(false);
+                pauseTable.toFront();
                 pauseTable.setVisible(true);
             }
         });
@@ -289,6 +293,7 @@ public class PlayScreen extends BaseScreen {
         projectiles.clear();
         mapSouls.clear();
         mapKeys.clear();
+        floatingTexts.clear();
         playerSouls = 0;
         playerKeys = 0;
 
@@ -362,9 +367,35 @@ public class PlayScreen extends BaseScreen {
             }
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.B) && gameState != GameState.GAME_OVER && !activeBoss.isDead()) {
+        // Shop Key Toggle: only allowed during PLAYING or SHOP
+        if (Gdx.input.isKeyJustPressed(Input.Keys.B) && gameState != GameState.GAME_OVER && !activeBoss.isDead() && (gameState == GameState.PLAYING || gameState == GameState.SHOP)) {
             gameState = (gameState == GameState.SHOP) ? GameState.PLAYING : GameState.SHOP;
             shopMessage = "";
+            if (gameState == GameState.PLAYING) {
+                Gdx.input.setInputProcessor(null);
+            }
+        }
+
+        // Mouse click on Mystic Shop logo below Minimap to toggle Shop
+        if (gameState == GameState.PLAYING && !activeBoss.isDead() && Gdx.input.justTouched()) {
+            com.badlogic.gdx.math.Vector3 mPos = new com.badlogic.gdx.math.Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+            hudCamera.unproject(mPos);
+            if (mPos.x >= 1118f && mPos.x <= 1118f + 84f && mPos.y >= 502f && mPos.y <= 502f + 84f) {
+                ((GreenGuardianGame) game).playButtonSound();
+                gameState = GameState.SHOP;
+                shopMessage = "";
+            }
+        } else if (gameState == GameState.SHOP && Gdx.input.justTouched()) {
+            com.badlogic.gdx.math.Vector3 mPos = new com.badlogic.gdx.math.Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+            hudCamera.unproject(mPos);
+            // Click outside modal or on the top-right header area cleanly closes shop
+            float modalX = 230f, modalY = 95f, modalW = 820f, modalH = 530f;
+            if (mPos.x < modalX || mPos.x > modalX + modalW || mPos.y < modalY || mPos.y > modalY + modalH || (mPos.x >= modalX + modalW - 220f && mPos.y >= modalY + modalH - 45f)) {
+                ((GreenGuardianGame) game).playButtonSound();
+                gameState = GameState.PLAYING;
+                shopMessage = "";
+                Gdx.input.setInputProcessor(null);
+            }
         }
 
         if (gameState == GameState.PLAYING) {
@@ -398,9 +429,19 @@ public class PlayScreen extends BaseScreen {
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            if (gameState == GameState.PLAYING) {
+            if (gameState == GameState.SHOP) {
+                // ESC key cleanly closes the shop modal and returns to playing
+                gameState = GameState.PLAYING;
+                shopMessage = "";
+                Gdx.input.setInputProcessor(null);
+            } else if (gameState == GameState.PLAYING) {
                 gameState = GameState.PAUSE;
+                if (uiStage != null) {
+                    uiStage.unfocusAll();
+                    uiStage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+                }
                 Gdx.input.setInputProcessor(uiStage);
+                pauseTable.toFront();
                 pauseTable.setVisible(true);
                 optionsTable.setVisible(false);
             } else if (gameState == GameState.PAUSE || gameState == GameState.OPTIONS) {
@@ -442,6 +483,15 @@ public class PlayScreen extends BaseScreen {
         for (Projectile p : projectiles) {
             batch.draw((p.type == 2) ? game.assets.staffProjectileTexture : game.assets.swordProjectileTexture, p.bounds.x, p.bounds.y, p.bounds.width, p.bounds.height);
         }
+
+        for (int i = floatingTexts.size - 1; i >= 0; i--) {
+            FloatingText ft = floatingTexts.get(i);
+            if (ft.update(delta)) {
+                floatingTexts.removeIndex(i);
+            } else {
+                ft.draw(batch, font);
+            }
+        }
         batch.end();
 
         shapeRenderer.setProjectionMatrix(camera.combined);
@@ -453,8 +503,9 @@ public class PlayScreen extends BaseScreen {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
         // These HUD calls will compile perfectly now that activeBoss is a type of Boss
-        hud.drawHealthBars(player, activeBoss);
+        hud.drawHealthBars(player, activeBoss, levelIndex);
         hud.drawWeaponHotbarSlots(player, gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss);
+        hud.drawMinimap(shapeRenderer, mapWidthInPixels, mapHeightInPixels, player, enemies, activeBoss, mapSouls, mapKeys, camera, mapBlocks, SCALE_FACTOR, gameState == GameState.GAME_OVER || gameState == GameState.SHOP);
         shapeRenderer.end();
 
         hud.drawOverlays(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss, shopSelectedIndex);
@@ -527,13 +578,31 @@ public class PlayScreen extends BaseScreen {
         }
     }
 
+    public void spawnFloatingText(float x, float y, String text, Color color) {
+        spawnFloatingText(x, y, text, color, 1.0f, 1.0f);
+    }
+
+    public void spawnFloatingText(float x, float y, String text, Color color, float duration, float scale) {
+        floatingTexts.add(new FloatingText(x, y, text, color, duration, scale));
+    }
+
     private void updateWorld(float delta) {
         // Player Heal with 'H' key: costs 50 souls and restores 50% health
         if (Gdx.input.isKeyJustPressed(Input.Keys.H)) {
-            if (player.canHeal() && playerSouls >= 50) {
+            if (player.getHealth() >= player.getMaxHealth()) {
+                spawnFloatingText(player.getBounds().x + 5, player.getBounds().y + 80, "FULL HP!", Color.GOLD, 0.9f, 1.0f);
+            } else if (playerSouls < 50) {
+                spawnFloatingText(player.getBounds().x - 10, player.getBounds().y + 80, "NEED 50 SOULS!", Color.valueOf("EF4444"), 0.9f, 1.0f);
+            } else if (player.canHeal()) {
                 playerSouls -= 50;
                 player.heal();
+                spawnFloatingText(player.getBounds().x + 5, player.getBounds().y + 85, "+500 HP", Color.valueOf("4ADE80"), 1.3f, 1.3f);
             }
+        }
+
+        // Floating text when player takes damage
+        if (player.pollJustTookDamage()) {
+            spawnFloatingText(player.getBounds().x + player.getBounds().width / 2f - 10, player.getBounds().y + 75, "-" + (int) player.getLastDamageTaken(), Color.valueOf("EF4444"), 0.9f, 1.1f);
         }
 
         player.update(delta, projectiles, mapBlocks, mapWater, SCALE_FACTOR);
@@ -551,14 +620,17 @@ public class PlayScreen extends BaseScreen {
 
             if (!activeBoss.isDead() && meleeHitbox.overlaps(activeBoss.getBounds())) {
                 activeBoss.takeDamage(damage);
+                spawnFloatingText(activeBoss.getBounds().x + activeBoss.getBounds().width / 2f - 15, activeBoss.getBounds().y + activeBoss.getBounds().height / 2f, "-" + (int) damage, Color.valueOf("F59E0B"), 0.9f, 1.2f);
                 hitAnything = true;
             }
 
             for (Enemy e : enemies) {
                 if (!e.isDead() && meleeHitbox.overlaps(e.getBounds())) {
                     e.takeDamage(damage);
+                    spawnFloatingText(e.getBounds().x + e.getBounds().width / 2f - 10, e.getBounds().y + e.getBounds().height + 10, "-" + (int) damage, Color.valueOf("FBBF24"), 0.9f, 1.0f);
                     if (e.isDead()) {
                         playerSouls += 15;
+                        spawnFloatingText(e.getBounds().x, e.getBounds().y + 35, "+15 Souls", Color.valueOf("C084FC"), 1.0f, 1.0f);
                     }
                     hitAnything = true;
                 }
@@ -587,6 +659,7 @@ public class PlayScreen extends BaseScreen {
             }
             if (player.getBounds().overlaps(s)) {
                 playerSouls += 10;
+                spawnFloatingText(s.x, s.y + 20, "+10 Souls", Color.valueOf("C084FC"), 0.9f, 0.9f);
                 mapSouls.removeIndex(i);
             }
         }
@@ -595,6 +668,7 @@ public class PlayScreen extends BaseScreen {
             Rectangle k = mapKeys.get(i);
             if (player.getBounds().overlaps(k)) {
                 playerKeys++;
+                spawnFloatingText(k.x - 15, k.y + 30, "+1 KEY FOUND!", Color.valueOf("FACC15"), 1.3f, 1.2f);
                 mapKeys.removeIndex(i);
             }
         }
@@ -610,6 +684,7 @@ public class PlayScreen extends BaseScreen {
 
             if (!activeBoss.isDead() && p.bounds.overlaps(activeBoss.getBounds())) {
                 activeBoss.takeDamage(p.damage);
+                spawnFloatingText(activeBoss.getBounds().x + activeBoss.getBounds().width / 2f - 15, activeBoss.getBounds().y + activeBoss.getBounds().height / 2f + 10, "-" + (int) p.damage, Color.valueOf("F59E0B"), 0.9f, 1.1f);
                 projectiles.removeIndex(i);
                 projectileHit = true;
             }
@@ -618,7 +693,11 @@ public class PlayScreen extends BaseScreen {
                 for (Enemy e : enemies) {
                     if (!e.isDead() && p.bounds.overlaps(e.getBounds())) {
                         e.takeDamage(p.damage);
-                        if (e.isDead()) playerSouls += 15;
+                        spawnFloatingText(e.getBounds().x + e.getBounds().width / 2f - 10, e.getBounds().y + e.getBounds().height + 10, "-" + (int) p.damage, Color.valueOf("FBBF24"), 0.9f, 1.0f);
+                        if (e.isDead()) {
+                            playerSouls += 15;
+                            spawnFloatingText(e.getBounds().x, e.getBounds().y + 35, "+15 Souls", Color.valueOf("C084FC"), 1.0f, 1.0f);
+                        }
                         projectiles.removeIndex(i);
                         projectileHit = true;
                         break;
@@ -668,11 +747,17 @@ public class PlayScreen extends BaseScreen {
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
+        if (uiStage != null) {
+            uiStage.getViewport().update(width, height, true);
+        }
     }
 
     @Override
     public void show() {
         Gdx.input.setInputProcessor(null);
+        if (uiStage != null) {
+            uiStage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+        }
         ((GreenGuardianGame) game).playGameplayMusic();
     }
 
