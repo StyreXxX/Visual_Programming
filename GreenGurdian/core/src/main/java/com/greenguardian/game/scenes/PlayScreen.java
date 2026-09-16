@@ -51,7 +51,11 @@ public class PlayScreen extends BaseScreen {
 
     private int playerSouls = 140;
     private int playerKeys = 0;
-    private final int STAFF_COST = 150;
+    private final int STAFF_COST = 100;
+    private final int HEALTH_ELIXIR_COST = 75;
+    private final int DAMAGE_STONE_COST = 60;
+    private final int SOUL_MAGNET_COST = 80;
+    private int shopSelectedIndex = 0;
 
     public enum GameState {
         PLAYING, SHOP, GAME_OVER, PAUSE, OPTIONS
@@ -370,16 +374,26 @@ public class PlayScreen extends BaseScreen {
                 resetGame();
             }
         } else if (gameState == GameState.SHOP) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
-                if (player.hasUnlockedStaff()) {
-                    shopMessage = "ALREADY OWNED!";
-                } else if (playerSouls >= STAFF_COST) {
-                    playerSouls -= STAFF_COST;
-                    player.unlockStaff();
-                    shopMessage = "PURCHASE SUCCESSFUL! [Press 1 or 2 to Switch]";
-                } else {
-                    shopMessage = "NOT ENOUGH SOULS!";
-                }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
+                shopSelectedIndex = (shopSelectedIndex - 1 + 4) % 4;
+                ((GreenGuardianGame) game).playButtonSound();
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
+                shopSelectedIndex = (shopSelectedIndex + 1) % 4;
+                ((GreenGuardianGame) game).playButtonSound();
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1) || Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_1)) {
+                shopSelectedIndex = 0;
+                buySelectedItem();
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2) || Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_2)) {
+                shopSelectedIndex = 1;
+                buySelectedItem();
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3) || Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_3)) {
+                shopSelectedIndex = 2;
+                buySelectedItem();
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_4) || Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_4)) {
+                shopSelectedIndex = 3;
+                buySelectedItem();
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                buySelectedItem();
             }
         }
 
@@ -443,10 +457,10 @@ public class PlayScreen extends BaseScreen {
         hud.drawWeaponHotbarSlots(player, gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss);
         shapeRenderer.end();
 
-        hud.drawOverlays(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss);
+        hud.drawOverlays(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss, shopSelectedIndex);
 
         batch.setProjectionMatrix(hudCamera.combined);
-        hud.drawTextAndIcons(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss, playerSouls, playerKeys, STAFF_COST, shopMessage, levelIndex, player);
+        hud.drawTextAndIcons(gameState == GameState.GAME_OVER, gameState == GameState.SHOP, activeBoss, playerSouls, playerKeys, STAFF_COST, shopMessage, levelIndex, player, shopSelectedIndex);
 
         if (gameState == GameState.PAUSE || gameState == GameState.OPTIONS) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -465,7 +479,63 @@ public class PlayScreen extends BaseScreen {
         }
     }
 
+    private void buySelectedItem() {
+        if (shopSelectedIndex == 0) {
+            // Magic Staff
+            if (player.hasUnlockedStaff()) {
+                shopMessage = "ALREADY OWNED!";
+            } else if (playerSouls >= STAFF_COST) {
+                playerSouls -= STAFF_COST;
+                player.unlockStaff();
+                ((GreenGuardianGame) game).playButtonSound();
+                shopMessage = "PURCHASE SUCCESSFUL! [Press 1 or 2 to Switch]";
+            } else {
+                shopMessage = "NOT ENOUGH SOULS!";
+            }
+        } else if (shopSelectedIndex == 1) {
+            // Max Health Elixir (+200 HP)
+            if (playerSouls >= HEALTH_ELIXIR_COST) {
+                playerSouls -= HEALTH_ELIXIR_COST;
+                player.addMaxHealth(200);
+                ((GreenGuardianGame) game).playButtonSound();
+                shopMessage = "PURCHASE SUCCESSFUL! Max HP increased by +200!";
+            } else {
+                shopMessage = "NOT ENOUGH SOULS!";
+            }
+        } else if (shopSelectedIndex == 2) {
+            // Damage Stone (+20% Damage)
+            if (playerSouls >= DAMAGE_STONE_COST) {
+                playerSouls -= DAMAGE_STONE_COST;
+                player.addDamageStone();
+                ((GreenGuardianGame) game).playButtonSound();
+                shopMessage = "PURCHASE SUCCESSFUL! Damage increased by +20%!";
+            } else {
+                shopMessage = "NOT ENOUGH SOULS!";
+            }
+        } else if (shopSelectedIndex == 3) {
+            // Soul Magnet
+            if (player.hasSoulMagnet()) {
+                shopMessage = "ALREADY OWNED!";
+            } else if (playerSouls >= SOUL_MAGNET_COST) {
+                playerSouls -= SOUL_MAGNET_COST;
+                player.unlockSoulMagnet();
+                ((GreenGuardianGame) game).playButtonSound();
+                shopMessage = "PURCHASE SUCCESSFUL! Soul Magnet active!";
+            } else {
+                shopMessage = "NOT ENOUGH SOULS!";
+            }
+        }
+    }
+
     private void updateWorld(float delta) {
+        // Player Heal with 'H' key: costs 50 souls and restores 50% health
+        if (Gdx.input.isKeyJustPressed(Input.Keys.H)) {
+            if (player.canHeal() && playerSouls >= 50) {
+                playerSouls -= 50;
+                player.heal();
+            }
+        }
+
         player.update(delta, projectiles, mapBlocks, mapWater, SCALE_FACTOR);
 
         // activeBoss is already a Boss, so it updates polymorphically without a cast
@@ -501,6 +571,20 @@ public class PlayScreen extends BaseScreen {
 
         for (int i = mapSouls.size - 1; i >= 0; i--) {
             Rectangle s = mapSouls.get(i);
+            if (player.hasSoulMagnet()) {
+                float px = player.getBounds().x + player.getBounds().width / 2f;
+                float py = player.getBounds().y + player.getBounds().height / 2f;
+                float sx = s.x + s.width / 2f;
+                float sy = s.y + s.height / 2f;
+                float dx = px - sx;
+                float dy = py - sy;
+                float dist = (float) Math.sqrt(dx * dx + dy * dy);
+                if (dist < 400f && dist > 1f) {
+                    float pullSpeed = 350f * delta;
+                    s.x += (dx / dist) * pullSpeed;
+                    s.y += (dy / dist) * pullSpeed;
+                }
+            }
             if (player.getBounds().overlaps(s)) {
                 playerSouls += 10;
                 mapSouls.removeIndex(i);

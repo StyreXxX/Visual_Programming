@@ -23,6 +23,7 @@ public class AssetLoader {
     public Texture playerIdleSheet;
     public Texture playerStaffWalkSheet;
     public Texture playerStaffAttackSheet;
+    public Texture playerHealSheet;
     // public Texture playerStaffIdleSheet;
 
     // Boss 1 Textures (Level 1)
@@ -73,6 +74,7 @@ public class AssetLoader {
         playerIdleSheet = new Texture(Gdx.files.internal("characters/player/idle-animation.png"));
         playerStaffWalkSheet = new Texture(Gdx.files.internal("characters/player/mainCharacterStaffWalking.png"));
         playerStaffAttackSheet = new Texture(Gdx.files.internal("characters/player/mainCharacterStaffAttack.png"));
+        playerHealSheet = new Texture(Gdx.files.internal("characters/player/MaincharacterHeal.png"));
 
         // Boss 1 (Level 1)
         bossWalkSheet = new Texture(Gdx.files.internal("characters/bosses/boss1/EnemyWalking.png"));
@@ -139,6 +141,7 @@ public class AssetLoader {
         if (playerIdleSheet != null) playerIdleSheet.dispose();
         if (playerStaffWalkSheet != null) playerStaffWalkSheet.dispose();
         if (playerStaffAttackSheet != null) playerStaffAttackSheet.dispose();
+        if (playerHealSheet != null) playerHealSheet.dispose();
 
         if (bossWalkSheet != null) bossWalkSheet.dispose();
         if (bossAttackSheet != null) bossAttackSheet.dispose();

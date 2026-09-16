@@ -13,10 +13,16 @@ import com.greenguardian.game.assets.AssetLoader;
 
 public class Player extends Entity {
     private Texture staffWalkSheet, staffAttackSheet;
-    private Animation<TextureRegion> staffWalkAnim, staffAttackAnim, idleAnim;
+    private Texture healSheet;
+    private Animation<TextureRegion> staffWalkAnim, staffAttackAnim, idleAnim, healAnim;
+    private boolean isHealing = false;
+    private float healStateTime = 0f;
     // private TextureRegion staffIdleFrame;
 
     private boolean hasUnlockedStaff = false;
+    private float bonusDamageMultiplier = 1.0f;
+    private int damageStoneCount = 0;
+    private boolean hasSoulMagnet = false;
     private int equippedWeapon = 1; // 1 = Sword, 2 = Staff
     private boolean inWater = false;
     private boolean wasInWater = false;
@@ -50,6 +56,9 @@ public class Player extends Entity {
 
         staffWalkAnim = createAnimation(staffWalkSheet, 4, 0.15f);
         staffAttackAnim = createAnimation(staffAttackSheet, 3, 0.1f);
+
+        healSheet = assets.playerHealSheet;
+        healAnim = createAnimation(healSheet, 8, 0.11f);
 
         idleFrame = new TextureRegion(standSheet);
         // staffIdleFrame = new TextureRegion(staffWalkSheet, 0, 0, staffWalkSheet.getWidth() / 4, staffWalkSheet.getHeight());
@@ -105,11 +114,52 @@ public class Player extends Entity {
     }
 
     public float getMeleeDamage() {
-        return 1.0f * getAttackDamageMultiplier();
+        return 1.0f * bonusDamageMultiplier * getAttackDamageMultiplier();
+    }
+
+    public void addMaxHealth(float amount) {
+        this.maxHealth += amount;
+        this.health = Math.min(this.maxHealth, this.health + amount);
+    }
+
+    public void addDamageStone() {
+        this.damageStoneCount++;
+        this.bonusDamageMultiplier += 0.20f;
+    }
+
+    public float getBonusDamageMultiplier() {
+        return bonusDamageMultiplier;
+    }
+
+    public int getDamageStoneCount() {
+        return damageStoneCount;
+    }
+
+    public void unlockSoulMagnet() {
+        this.hasSoulMagnet = true;
+    }
+
+    public boolean hasSoulMagnet() {
+        return hasSoulMagnet;
     }
 
     public boolean canDealMeleeDamage() {
         return isAttacking && !isStaffEquipped() && !hasDealtMeleeDamage && stateTime >= 0.08f && stateTime <= 0.45f;
+    }
+
+    public boolean canHeal() {
+        return !isDead && !isHealing && health < maxHealth;
+    }
+
+    public boolean isHealing() {
+        return isHealing;
+    }
+
+    public void heal() {
+        if (!canHeal()) return;
+        isHealing = true;
+        healStateTime = 0f;
+        health = Math.min(maxHealth, health + maxHealth * 0.5f);
     }
 
     public Rectangle getMeleeHitbox() {
@@ -131,6 +181,14 @@ public class Player extends Entity {
             stateTime += delta;
         }
         if (isDead) return;
+
+        if (isHealing) {
+            healStateTime += delta;
+            if (healAnim.isAnimationFinished(healStateTime)) {
+                isHealing = false;
+                healStateTime = 0f;
+            }
+        }
 
         float oldY = bounds.y;
         velocityY += GRAVITY * delta;
@@ -166,12 +224,12 @@ public class Player extends Entity {
         }
         wasInWater = inWater;
 
-        // Process water debuff (duration is exactly 5 seconds, reducing health slowly by 25%)
+        // Process water debuff (duration is exactly 5 seconds, reducing health slowly by 10%)
         if (waterDebuffTimer > 0f) {
             waterDebuffTimer -= delta;
 
-            // Reduce health slowly by 25% of max health over 5 seconds (5% per second)
-            float damageThisFrame = (maxHealth * 0.25f / 5.0f) * delta;
+            // Reduce health slowly by 10% of max health over 5 seconds (2% per second)
+            float damageThisFrame = (maxHealth * 0.10f / 5.0f) * delta;
             health -= damageThisFrame;
             if (health <= 0f) {
                 health = 0f;
@@ -186,7 +244,7 @@ public class Player extends Entity {
 
         // Reduce jump height to half (50%) when in water or water debuffed (persists for 5s out of water)
         float currentJumpSpeed = isWaterDebuffed() ? JUMP_SPEED * 0.5f : JUMP_SPEED;
-        if (groundedTimer > 0 && !isAttacking && (Gdx.input.isKeyJustPressed(Input.Keys.W) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.UP))) {
+        if (groundedTimer > 0 && !isAttacking && !isHealing && (Gdx.input.isKeyJustPressed(Input.Keys.W) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.UP))) {
             velocityY = currentJumpSpeed;
             groundedTimer = 0;
         }
@@ -196,7 +254,7 @@ public class Player extends Entity {
         // Reduce movement speed by 50% when in water or water debuffed (persists for 5s out of water)
         float currentSpeed = isWaterDebuffed() ? PLAYER_SPEED * 0.5f : PLAYER_SPEED;
 
-        if (!isAttacking) {
+        if (!isAttacking && !isHealing) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1) || Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_1)) {
                 equippedWeapon = 1;
             } else if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2) || Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_2)) {
@@ -238,7 +296,7 @@ public class Player extends Entity {
         float px = facingRight ? bounds.x + 50 : bounds.x - 20;
         float py = bounds.y + 30;
 
-        float staffDamage = 2.0f * getAttackDamageMultiplier();
+        float staffDamage = 2.0f * bonusDamageMultiplier * getAttackDamageMultiplier();
         projectiles.add(new Projectile(px, py, facingRight, 2, staffDamage));
     }
 
@@ -248,6 +306,8 @@ public class Player extends Entity {
 
         if (isDead) {
             currentFrame = deathAnim.getKeyFrame(stateTime, false);
+        } else if (isHealing) {
+            currentFrame = healAnim.getKeyFrame(healStateTime, false);
         } else if (isAttacking) {
             currentFrame = (isStaffEquipped() ? staffAttackAnim : attackAnim).getKeyFrame(stateTime, false);
         } else if (velocityY != 0 && !inWater) {
