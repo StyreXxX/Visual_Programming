@@ -23,13 +23,24 @@ public class AssetLoader {
     public Texture playerStaffAttackSheet;
     // public Texture playerStaffIdleSheet;
 
-    // Boss Textures
+    // Boss 1 Textures (Level 1)
     public Texture bossWalkSheet;
     public Texture bossAttackSheet;
     public Texture bossSpecialAttackSheet;
     public Texture bossDashSheet;
     public Texture bossDeathSheet;
     public Texture bossChargeSheet;
+
+    // Boss 2 Textures (Level 2 - Tree Knight)
+    public Texture boss2WalkSheet;
+    public Texture boss2AttackSheet;
+    public Texture boss2SmashSheet;
+    public Texture boss2ChargeSheet;
+    public Texture boss2DashSheet;
+    public Texture boss2ShieldSheet;
+    public Texture boss2DeathSheet;
+
+    // Backwards-compatible aliases for Level 2 Boss
     public Texture centaurWalkSheet;
     public Texture centaurBasicAttackSheet;
     public Texture centaurSmashAttackSheet;
@@ -55,19 +66,29 @@ public class AssetLoader {
         playerStaffWalkSheet = new Texture(Gdx.files.internal("characters/player/mainCharacterStaffWalking.png"));
         playerStaffAttackSheet = new Texture(Gdx.files.internal("characters/player/mainCharacterStaffAttack.png"));
 
-        // Boss
-        bossWalkSheet = new Texture(Gdx.files.internal("characters/boss/EnemyWalking.png"));
-        bossAttackSheet = new Texture(Gdx.files.internal("characters/boss/EnemyAttack.png"));
-        bossSpecialAttackSheet = new Texture(Gdx.files.internal("characters/boss/FirstBossAttack.png"));
-        bossDashSheet = new Texture(Gdx.files.internal("characters/boss/bossDash.png"));
-        bossDeathSheet = new Texture(Gdx.files.internal("characters/boss/EnemyDeath.png"));
-        bossChargeSheet = new Texture(Gdx.files.internal("characters/boss/bossCharge.png"));
+        // Boss 1 (Level 1)
+        bossWalkSheet = new Texture(Gdx.files.internal("characters/bosses/boss1/EnemyWalking.png"));
+        bossAttackSheet = new Texture(Gdx.files.internal("characters/bosses/boss1/EnemyAttack.png"));
+        bossSpecialAttackSheet = new Texture(Gdx.files.internal("characters/bosses/boss1/FirstBossAttack.png"));
+        bossDashSheet = new Texture(Gdx.files.internal("characters/bosses/boss1/bossDash.png"));
+        bossDeathSheet = new Texture(Gdx.files.internal("characters/bosses/boss1/EnemyDeath.png"));
+        bossChargeSheet = new Texture(Gdx.files.internal("characters/bosses/boss1/bossCharge.png"));
 
-        centaurWalkSheet = new Texture(Gdx.files.internal("characters/boss/centaurWalk.png"));
-        centaurBasicAttackSheet = new Texture(Gdx.files.internal("characters/boss/centaurBasicAttack.png"));
-        centaurSmashAttackSheet = new Texture(Gdx.files.internal("characters/boss/centaurSmashAttack.png"));
-        centaurChargeAttackSheet = new Texture(Gdx.files.internal("characters/boss/centaurChargeAttack.png"));
-        centaurDeathSheet = new Texture(Gdx.files.internal("characters/boss/centaurDeath.png"));
+        // Boss 2 (Level 2 - Tree Knight)
+        boss2WalkSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Walking.png"));
+        boss2AttackSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Attack.png"));
+        boss2SmashSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Smash.png"));
+        boss2ChargeSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Charge.png"));
+        boss2DashSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Dash.png"));
+        boss2ShieldSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Shield.png"));
+        boss2DeathSheet = new Texture(Gdx.files.internal("characters/bosses/boss2/boss2Death.png"));
+
+        // Alias for compatibility
+        centaurWalkSheet = boss2WalkSheet;
+        centaurBasicAttackSheet = boss2AttackSheet;
+        centaurSmashAttackSheet = boss2SmashSheet;
+        centaurChargeAttackSheet = boss2ChargeSheet;
+        centaurDeathSheet = boss2DeathSheet;
 
         // Enemy
         enemyWalkSheet = new Texture(Gdx.files.internal("characters/enemy/normalEnemyWalking.png"));
@@ -112,11 +133,13 @@ public class AssetLoader {
         if (bossDeathSheet != null) bossDeathSheet.dispose();
         if (bossChargeSheet != null) bossChargeSheet.dispose();
 
-        if (centaurWalkSheet != null) centaurWalkSheet.dispose();
-        if (centaurBasicAttackSheet != null) centaurBasicAttackSheet.dispose();
-        if (centaurSmashAttackSheet != null) centaurSmashAttackSheet.dispose();
-        if (centaurChargeAttackSheet != null) centaurChargeAttackSheet.dispose();
-        if (centaurDeathSheet != null) centaurDeathSheet.dispose();
+        if (boss2WalkSheet != null) boss2WalkSheet.dispose();
+        if (boss2AttackSheet != null) boss2AttackSheet.dispose();
+        if (boss2SmashSheet != null) boss2SmashSheet.dispose();
+        if (boss2ChargeSheet != null) boss2ChargeSheet.dispose();
+        if (boss2DashSheet != null) boss2DashSheet.dispose();
+        if (boss2ShieldSheet != null) boss2ShieldSheet.dispose();
+        if (boss2DeathSheet != null) boss2DeathSheet.dispose();
 
         if (enemyWalkSheet != null) enemyWalkSheet.dispose();
         if (enemyAttackSheet != null) enemyAttackSheet.dispose();

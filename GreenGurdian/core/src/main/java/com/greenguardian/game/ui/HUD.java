@@ -137,7 +137,11 @@ public class HUD {
 
             if (boss.isAwake()) {
                 font.setColor(Color.GOLD);
-                font.draw(batch, "THE GUARDIAN", 555, 712);
+                if (levelIndex == 2) {
+                    font.draw(batch, "TREE KNIGHT", 565, 712);
+                } else {
+                    font.draw(batch, "THE GUARDIAN", 555, 712);
+                }
             }
         }
 

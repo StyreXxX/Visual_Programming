@@ -9,14 +9,15 @@ import com.badlogic.gdx.math.Rectangle;
 import com.greenguardian.game.assets.AssetLoader;
 
 public class CentaurBoss extends Boss {
-    private Texture smashAttackSheet, centaurChargeSheet;
-    private Animation<TextureRegion> smashAttackAnim, centaurChargeAnim;
+    private Texture smashAttackSheet, chargeSheet, dashSheet, shieldSheet;
+    private Animation<TextureRegion> smashAttackAnim, chargeAnim, dashAnim, shieldAnim;
 
     private boolean isSmashing = false;
     private boolean isCharging = false;
+    private boolean isShielding = false;
 
-    private float baseSpeed = 140f;
-    private float chargeSpeed = 700f;
+    private float baseSpeed = 130f;
+    private float chargeSpeed = 650f;
     private float patrolMinX;
     private float patrolMaxX;
 
@@ -24,24 +25,31 @@ public class CentaurBoss extends Boss {
         super(startX, startY, assets);
 
         // Override the bounds and health set by the default Boss constructor
-        this.bounds.width = 100;
-        this.bounds.height = 140;
+        this.bounds.width = 90;
+        this.bounds.height = 130;
         this.maxHealth = 80;
         this.health = 80;
 
-        walkSheet = assets.centaurWalkSheet;
-        attackSheet = assets.centaurBasicAttackSheet;
-        smashAttackSheet = assets.centaurSmashAttackSheet;
-        centaurChargeSheet = assets.centaurChargeAttackSheet;
-        deathSheet = assets.centaurDeathSheet;
+        walkSheet = assets.boss2WalkSheet;
+        attackSheet = assets.boss2AttackSheet;
+        smashAttackSheet = assets.boss2SmashSheet;
+        chargeSheet = assets.boss2ChargeSheet;
+        dashSheet = assets.boss2DashSheet;
+        shieldSheet = assets.boss2ShieldSheet;
+        deathSheet = assets.boss2DeathSheet;
 
-        walkAnim = createAnimation(walkSheet, 8, 0.12f);
-        attackAnim = createAnimation(attackSheet, 7, 0.1f);
-        smashAttackAnim = createAnimation(smashAttackSheet, 7, 0.15f);
-        centaurChargeAnim = createAnimation(centaurChargeSheet, 6, 0.1f);
-        deathAnim = createAnimation(deathSheet, 8, 0.15f);
+        // 4 columns x 2 rows = 8 frames each
+        walkAnim = createGridAnimation(walkSheet, 4, 2, 0.12f);
+        attackAnim = createGridAnimation(attackSheet, 4, 2, 0.10f);
+        smashAttackAnim = createGridAnimation(smashAttackSheet, 4, 2, 0.12f);
+        chargeAnim = createGridAnimation(chargeSheet, 4, 2, 0.10f);
+        dashAnim = createGridAnimation(dashSheet, 4, 2, 0.10f);
+        shieldAnim = createGridAnimation(shieldSheet, 4, 2, 0.12f);
+        deathAnim = createGridAnimation(deathSheet, 4, 2, 0.15f);
 
-        idleFrame = new TextureRegion(walkSheet, 0, 0, walkSheet.getWidth() / 8, walkSheet.getHeight());
+        int frameW = walkSheet.getWidth() / 4;
+        int frameH = walkSheet.getHeight() / 2;
+        idleFrame = new TextureRegion(walkSheet, 0, 0, frameW, frameH);
 
         patrolMinX = startX - 300f;
         patrolMaxX = startX + 300f;
@@ -81,11 +89,17 @@ public class CentaurBoss extends Boss {
 
             if (isCharging) {
                 bounds.x += (facingRight ? chargeSpeed : -chargeSpeed) * delta;
-                if (centaurChargeAnim.isAnimationFinished(stateTime)) {
+                if (chargeAnim.isAnimationFinished(stateTime)) {
                     isCharging = false;
                 } else if (bounds.overlaps(player.getBounds()) && !player.isDead()) {
                     player.takeDamage(2);
                     isCharging = false;
+                }
+            }
+            else if (isShielding) {
+                if (shieldAnim.isAnimationFinished(stateTime)) {
+                    isShielding = false;
+                    stateTime = 0;
                 }
             }
             else if (isGrounded && !isAttacking && !isSmashing) {
@@ -96,8 +110,11 @@ public class CentaurBoss extends Boss {
 
                     if (smashReach.overlaps(player.getBounds())) {
                         facingRight = player.getBounds().x > bounds.x;
-                        if (Math.random() < 0.4) {
+                        double rand = Math.random();
+                        if (rand < 0.35) {
                             isSmashing = true;
+                        } else if (rand < 0.6) {
+                            isShielding = true;
                         } else {
                             isAttacking = true;
                         }
@@ -105,7 +122,7 @@ public class CentaurBoss extends Boss {
                     }
                     else if (distanceToPlayer < 600) {
                         facingRight = player.getBounds().x > bounds.x;
-                        if (distanceToPlayer > 300 && Math.random() < 0.03) {
+                        if (distanceToPlayer > 280 && Math.random() < 0.03) {
                             isCharging = true;
                             stateTime = 0;
                         } else {
@@ -120,14 +137,14 @@ public class CentaurBoss extends Boss {
             if (checkCollision(bounds, blocks, scale)) {
                 bounds.x = oldX;
                 if (isCharging) isCharging = false;
-                if (!isCharging && !isAttacking && !isSmashing) {
+                if (!isCharging && !isAttacking && !isSmashing && !isShielding) {
                     facingRight = !facingRight;
                 }
             }
 
             if (isAttacking && attackAnim.isAnimationFinished(stateTime)) {
                 stateTime = 0;
-                Rectangle attackReach = new Rectangle(bounds.x - 40, bounds.y, bounds.width + 80, bounds.height);
+                Rectangle attackReach = new Rectangle(bounds.x - 50, bounds.y, bounds.width + 100, bounds.height);
                 if (attackReach.overlaps(player.getBounds()) && !player.isDead()) {
                     player.takeDamage(1);
                 }
@@ -135,7 +152,7 @@ public class CentaurBoss extends Boss {
             }
             else if (isSmashing && smashAttackAnim.isAnimationFinished(stateTime)) {
                 stateTime = 0;
-                Rectangle smashReach = new Rectangle(bounds.x - 60, bounds.y, bounds.width + 120, bounds.height);
+                Rectangle smashReach = new Rectangle(bounds.x - 70, bounds.y, bounds.width + 140, bounds.height);
                 if (smashReach.overlaps(player.getBounds()) && !player.isDead()) {
                     player.takeDamage(3);
                 }
@@ -157,6 +174,15 @@ public class CentaurBoss extends Boss {
     }
 
     @Override
+    public void takeDamage(int amount) {
+        // If shielding when attacked, block damage
+        if (isShielding && !isDead) {
+            amount = Math.max(1, amount / 2);
+        }
+        super.takeDamage(amount);
+    }
+
+    @Override
     public void draw(SpriteBatch batch) {
         TextureRegion currentFrame = idleFrame;
 
@@ -165,7 +191,9 @@ public class CentaurBoss extends Boss {
         } else if (!isAwake) {
             currentFrame = idleFrame;
         } else if (isCharging) {
-            currentFrame = centaurChargeAnim.getKeyFrame(stateTime, true);
+            currentFrame = chargeAnim.getKeyFrame(stateTime, true);
+        } else if (isShielding) {
+            currentFrame = shieldAnim.getKeyFrame(stateTime, false);
         } else if (isSmashing) {
             currentFrame = smashAttackAnim.getKeyFrame(stateTime, false);
         } else if (isAttacking) {
@@ -181,7 +209,7 @@ public class CentaurBoss extends Boss {
         float drawWidth = drawHeight * aspect;
 
         float drawX = bounds.x + (bounds.width / 2f) - (drawWidth / 2f);
-        float drawY = bounds.y - 28f;
+        float drawY = bounds.y - 10f;
         drawFlipped(batch, currentFrame, drawX, drawY, drawWidth, drawHeight, facingRight);
     }
 }

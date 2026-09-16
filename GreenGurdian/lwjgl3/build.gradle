@@ -18,7 +18,8 @@ apply plugin: 'io.github.fourlastor.construo'
 
 import io.github.fourlastor.construo.Target
 
-sourceSets.main.resources.srcDirs += [ rootProject.file('assets').path ]
+// Assets are read directly from assets/ via workingDir during run, and packaged in jar tasks.
+// Excluding assets from processResources prevents Windows/OneDrive from locking build/resources.
 application.mainClass = 'com.greenguardian.game.lwjgl3.Lwjgl3Launcher'
 application.applicationName = appName
 eclipse.project.name = appName + '-lwjgl3'
@@ -53,6 +54,10 @@ dependencies {
 
 def os = System.properties['os.name'].toLowerCase(Locale.ROOT)
 
+processResources {
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 run {
   workingDir = rootProject.file('assets').path
 // You can uncomment the next line if your IDE claims a build failure even when the app closed properly.
@@ -68,6 +73,7 @@ jar {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   dependsOn configurations.runtimeClasspath
   from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+  from(rootProject.file('assets'))
 // these "exclude" lines remove some unnecessary duplicate files in the output JAR.
   exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
   dependencies {

@@ -48,6 +48,18 @@ public abstract class Entity {
         return new Animation<>(frameDuration, frames);
     }
 
+    protected Animation<TextureRegion> createGridAnimation(Texture sheet, int cols, int rows, float frameDuration) {
+        TextureRegion[][] tmp = TextureRegion.split(sheet, sheet.getWidth() / cols, sheet.getHeight() / rows);
+        TextureRegion[] frames = new TextureRegion[cols * rows];
+        int index = 0;
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                frames[index++] = tmp[r][c];
+            }
+        }
+        return new Animation<>(frameDuration, frames);
+    }
+
     public void takeDamage(int amount) {
         if (!isDead) {
             health -= amount;
