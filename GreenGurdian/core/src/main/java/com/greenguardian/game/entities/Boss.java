@@ -230,7 +230,13 @@ public class Boss extends Entity {
         }
 
         float drawX = bounds.x + (bounds.width / 2f) - (180f / 2f);
-        drawFlipped(batch, currentFrame, drawX, bounds.y, 180, 180, facingRight);
+        
+        float drawY = bounds.y - 30f;
+        if (isAttacking || isSpecialAttacking || isCharging || isDashing) {
+            drawY = bounds.y - 5f;
+        }
+        
+        drawFlipped(batch, currentFrame, drawX, drawY, 180, 180, facingRight);
     }
 
     @Override

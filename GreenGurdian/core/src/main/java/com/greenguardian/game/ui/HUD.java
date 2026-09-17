@@ -63,7 +63,8 @@ public class HUD {
         }
 
         // ================= UNIFIED RPG STATUS FRAME (Master Chassis) =================
-        float frameX = 18f, frameY = 620f, frameW = 392f, frameH = 82f;
+        float frameY = 630f;
+        float frameX = 18f, frameW = 330f, frameH = 70f;
 
         // Soft Frame Outer Drop Shadow
         shapeRenderer.setColor(0f, 0f, 0f, 0.55f);
@@ -88,7 +89,7 @@ public class HUD {
         shapeRenderer.rectLine(frameX + frameW - 2, frameY + 2, frameX + frameW - 2, frameY + frameH - 2, 1f);
 
         // ================= INTEGRATED PORTRAIT SOCKET =================
-        float portX = 26f, portY = 626f, portW = 70f, portH = 70f;
+        float portX = 24f, portY = frameY + 5f, portW = 60f, portH = 60f;
 
         // Recessed Dark Well Interior
         shapeRenderer.setColor(0.04f, 0.05f, 0.07f, 1f);
@@ -102,7 +103,7 @@ public class HUD {
         shapeRenderer.rectLine(portX + portW, portY, portX + portW, portY + portH, 1.5f);
 
         // ================= PLAYER HEALTH BAR =================
-        float pX = 106f, pY = 648f, pW = 290f, pH = 18f;
+        float pX = 94f, pY = frameY + 24f, pW = 244f, pH = 14f;
 
         // Health Bar Recessed Shadow
         shapeRenderer.setColor(0f, 0f, 0f, 0.6f);
@@ -136,12 +137,12 @@ public class HUD {
         shapeRenderer.rectLine(pX + pW, pY, pX + pW, pY + pH, 1.5f);
 
         // ================= STATUS EFFECT BADGES (Row 3, Underneath HP) =================
-        float badgeX = 106f;
-        float badgeY = 626f;
-        float badgeH = 16f;
+        float badgeX = 94f;
+        float badgeY = frameY + 5f;
+        float badgeH = 14f;
 
         if (player.isWaterDebuffed()) {
-            float bWidth = 110f;
+            float bWidth = 90f;
             shapeRenderer.setColor(0.08f, 0.18f, 0.32f, 0.90f);
             shapeRenderer.rect(badgeX, badgeY, bWidth, badgeH);
             shapeRenderer.setColor(0.25f, 0.65f, 0.95f, 0.90f);
@@ -149,11 +150,11 @@ public class HUD {
             shapeRenderer.rectLine(badgeX, badgeY + badgeH, badgeX + bWidth, badgeY + badgeH, 1.2f);
             shapeRenderer.rectLine(badgeX, badgeY, badgeX, badgeY + badgeH, 1.2f);
             shapeRenderer.rectLine(badgeX + bWidth, badgeY, badgeX + bWidth, badgeY + badgeH, 1.2f);
-            badgeX += bWidth + 8f;
+            badgeX += bWidth + 6f;
         }
 
         if (player.getDamageStoneCount() > 0) {
-            float bWidth = 96f;
+            float bWidth = 80f;
             shapeRenderer.setColor(0.28f, 0.20f, 0.08f, 0.90f);
             shapeRenderer.rect(badgeX, badgeY, bWidth, badgeH);
             shapeRenderer.setColor(0.95f, 0.75f, 0.20f, 0.90f);
@@ -161,11 +162,11 @@ public class HUD {
             shapeRenderer.rectLine(badgeX, badgeY + badgeH, badgeX + bWidth, badgeY + badgeH, 1.2f);
             shapeRenderer.rectLine(badgeX, badgeY, badgeX, badgeY + badgeH, 1.2f);
             shapeRenderer.rectLine(badgeX + bWidth, badgeY, badgeX + bWidth, badgeY + badgeH, 1.2f);
-            badgeX += bWidth + 8f;
+            badgeX += bWidth + 6f;
         }
 
         if (player.hasSoulMagnet()) {
-            float bWidth = 82f;
+            float bWidth = 68f;
             shapeRenderer.setColor(0.22f, 0.10f, 0.30f, 0.90f);
             shapeRenderer.rect(badgeX, badgeY, bWidth, badgeH);
             shapeRenderer.setColor(0.75f, 0.45f, 0.95f, 0.90f);
@@ -660,7 +661,7 @@ public class HUD {
             font.setColor(Color.valueOf("B47EE5"));
             font.draw(batch, "x " + playerSouls, 1180, 68);
             font.setColor(Color.valueOf("80E892"));
-            font.draw(batch, "[H] Heal (50)", 1115, 20);
+            font.draw(batch, "[H] Heal (50)", 1120, 20);
 
             if (levelIndex == 1) {
                 batch.draw(assets.keyTexture, 1105, 75, 90, 90);
@@ -669,17 +670,18 @@ public class HUD {
             }
 
             // ================= PLAYER PORTRAIT & TEXT (Top-Left) =================
+            float frameY = 630f;
             if (playerPortraitRegion != null) {
-                batch.draw(playerPortraitRegion, 28f, 628f, 66f, 66f);
+                batch.draw(playerPortraitRegion, 25f, frameY + 6f, 58f, 58f);
             }
 
             // Header Row: Character Title (left) & Numeric HP (right) above the bar
-            drawShadowedText("GREEN GUARDIAN", 106f, 679f, Color.valueOf("FCD34D"), 0.70f);
+            drawShadowedText("GREEN GUARDIAN", 94f, frameY + 52f, Color.valueOf("FCD34D"), 0.60f);
 
             // Right-aligned clean HP readout: "HP" in mint emerald + numbers in crisp white
-            float barRightX = 106f + 290f;
+            float barRightX = 94f + 244f;
             String hpNumText = (int) player.getHealth() + " / " + (int) player.getMaxHealth();
-            font.getData().setScale(0.68f);
+            font.getData().setScale(0.58f);
             glyphLayout.setText(font, "HP " + hpNumText);
             float totalHpWidth = glyphLayout.width;
             glyphLayout.setText(font, "HP ");
@@ -687,34 +689,33 @@ public class HUD {
             font.getData().setScale(1.0f);
 
             float hpStartX = barRightX - totalHpWidth;
-            drawShadowedText("HP ", hpStartX, 679f, Color.valueOf("34D399"), 0.68f);
-            drawShadowedText(hpNumText, hpStartX + hpTagWidth, 679f, Color.WHITE, 0.68f);
+            drawShadowedText("HP ", hpStartX, frameY + 52f, Color.valueOf("34D399"), 0.58f);
+            drawShadowedText(hpNumText, hpStartX + hpTagWidth, frameY + 52f, Color.WHITE, 0.58f);
 
             // Status Badges Text with shadow (Row 3)
-            float textBadgeX = 106f;
+            float textBadgeX = 94f;
             if (player.isWaterDebuffed()) {
-                drawShadowedText("SLOW (" + (int) Math.ceil(player.getWaterDebuffTimer()) + "s)", textBadgeX + 6f, 638f, Color.valueOf("67E8F9"), 0.52f);
-                textBadgeX += 110f + 8f;
+                drawShadowedText("SLOW (" + (int) Math.ceil(player.getWaterDebuffTimer()) + "s)", textBadgeX + 6f, frameY + 16f, Color.valueOf("67E8F9"), 0.46f);
+                textBadgeX += 90f + 6f;
             }
 
             if (player.getDamageStoneCount() > 0) {
-                batch.draw(assets.swordIconTexture, textBadgeX + 4f, 627f, 14f, 14f);
-                drawShadowedText("+" + (player.getDamageStoneCount() * 20) + "% ATK", textBadgeX + 22f, 638f, Color.valueOf("FCD34D"), 0.52f);
-                textBadgeX += 96f + 8f;
+                batch.draw(assets.swordIconTexture, textBadgeX + 4f, frameY + 5f, 12f, 12f);
+                drawShadowedText("+" + (player.getDamageStoneCount() * 20) + "% ATK", textBadgeX + 18f, frameY + 16f, Color.valueOf("FCD34D"), 0.46f);
+                textBadgeX += 80f + 6f;
             }
 
             if (player.hasSoulMagnet()) {
-                batch.draw(assets.soulTexture, textBadgeX + 4f, 627f, 14f, 14f);
-                drawShadowedText("MAGNET", textBadgeX + 22f, 638f, Color.valueOf("C084FC"), 0.52f);
+                batch.draw(assets.soulTexture, textBadgeX + 4f, frameY + 5f, 12f, 12f);
+                drawShadowedText("MAGNET", textBadgeX + 18f, frameY + 16f, Color.valueOf("C084FC"), 0.46f);
             }
 
             if (boss.isAwake()) {
                 font.setColor(Color.GOLD);
-                if (levelIndex == 2) {
-                    font.draw(batch, "TREE KNIGHT", 565, 712);
-                } else {
-                    font.draw(batch, "THE GUARDIAN", 555, 712);
-                }
+                String bossName = (levelIndex == 2) ? "TREE KNIGHT" : "SKELETON KING";
+                glyphLayout.setText(font, bossName);
+                float textWidth = glyphLayout.width;
+                font.draw(batch, bossName, 640f - (textWidth / 2f), 712f);
             }
 
             // Weapon Hotbar icons and numbers
@@ -881,19 +882,37 @@ public class HUD {
             font.getData().setScale(1.0f);
         } else if (boss.isDead()) {
             if (levelIndex == 1) {
+                String titleText = playerKeys >= 3 ? "ALL KEYS FOUND!" : "LEVEL 1 CLEARED!";
+                font.getData().setScale(1.2f);
+                glyphLayout.setText(font, titleText);
+                float titleX = 640f - (glyphLayout.width / 2f);
                 font.setColor(Color.GOLD);
-                if (playerKeys >= 3) {
-                    font.draw(batch, "ALL KEYS FOUND!", 520, 430);
-                } else {
-                    font.draw(batch, "LEVEL 1 CLEARED!", 520, 430);
-                }
+                font.draw(batch, titleText, titleX, 430);
+
+                String btnText = "Enter Level 2";
+                font.getData().setScale(1.2f);
+                glyphLayout.setText(font, btnText);
+                float btnX = 640f - (glyphLayout.width / 2f);
+                float btnY = 320f + (glyphLayout.height / 2f);
                 font.setColor(Color.WHITE);
-                font.draw(batch, "Enter Level 2", 555, 328);
+                font.draw(batch, btnText, btnX, btnY);
+                font.getData().setScale(1.0f);
             } else {
+                String titleText = "VICTORY ACHIEVED!";
+                font.getData().setScale(1.2f);
+                glyphLayout.setText(font, titleText);
+                float titleX = 640f - (glyphLayout.width / 2f);
                 font.setColor(Color.GOLD);
-                font.draw(batch, "VICTORY ACHIEVED!", 500, 430);
+                font.draw(batch, titleText, titleX, 430);
+
+                String btnText = "Main Menu";
+                font.getData().setScale(1.2f);
+                glyphLayout.setText(font, btnText);
+                float btnX = 640f - (glyphLayout.width / 2f);
+                float btnY = 320f + (glyphLayout.height / 2f);
                 font.setColor(Color.WHITE);
-                font.draw(batch, "Main Menu", 585, 328);
+                font.draw(batch, btnText, btnX, btnY);
+                font.getData().setScale(1.0f);
             }
         }
         batch.end();

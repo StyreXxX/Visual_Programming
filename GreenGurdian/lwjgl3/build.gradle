@@ -18,8 +18,10 @@ apply plugin: 'io.github.fourlastor.construo'
 
 import io.github.fourlastor.construo.Target
 
-// Assets are read directly from assets/ via workingDir during run, and packaged in jar tasks.
-// Excluding assets from processResources prevents Windows/OneDrive from locking build/resources.
+// Make assets available on the desktop runtime classpath as well as in the packaged JAR.
+// This lets the launcher resolve internal assets when started directly from an IDE, whose
+// working directory is commonly lwjgl3/ rather than the project's assets/ directory.
+sourceSets.main.resources.srcDir(rootProject.file('assets'))
 application.mainClass = 'com.greenguardian.game.lwjgl3.Lwjgl3Launcher'
 application.applicationName = appName
 eclipse.project.name = appName + '-lwjgl3'
