@@ -22,6 +22,8 @@ public class MenuScreen extends BaseScreen {
     private Texture background;
     private Texture newGameTexture;
     private Texture quitTexture;
+    private Texture newGameHoverTexture;
+    private Texture quitHoverTexture;
 
     public MenuScreen(GreenGuardianGame game, SpriteBatch batch, BitmapFont font, OrthographicCamera hudCamera) {
         super(game, batch, font, hudCamera);
@@ -33,9 +35,9 @@ public class MenuScreen extends BaseScreen {
         game.playStartMusic();
 
         newGameTexture = new Texture("ui/btn_new_game.png");
-        Texture newGameHoverTexture = new Texture("ui/new game yellow.png");
+        newGameHoverTexture = new Texture("ui/new game yellow.png");
         quitTexture = new Texture("ui/btn_quit.png");
-        Texture quitHoverTexture = new Texture("ui/quit yellow.png");
+        quitHoverTexture = new Texture("ui/quit yellow.png");
 
         ImageButton.ImageButtonStyle newGameStyle = new ImageButton.ImageButtonStyle();
         newGameStyle.imageUp = new TextureRegionDrawable(new TextureRegion(newGameTexture));
@@ -101,6 +103,7 @@ public class MenuScreen extends BaseScreen {
         if (background != null) background.dispose();
         if (newGameTexture != null) newGameTexture.dispose();
         if (quitTexture != null) quitTexture.dispose();
+        if (newGameHoverTexture != null) newGameHoverTexture.dispose();
+        if (quitHoverTexture != null) quitHoverTexture.dispose();
     }
 }
-

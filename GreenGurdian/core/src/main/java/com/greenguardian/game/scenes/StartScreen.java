@@ -21,6 +21,7 @@ public class StartScreen extends BaseScreen {
     private Stage stage;
     private Texture background;
     private Texture startButtonTexture;
+    private Texture startButtonHoverTexture;
 
     public StartScreen(GreenGuardianGame game, SpriteBatch batch, BitmapFont font, OrthographicCamera hudCamera) {
         super(game, batch, font, hudCamera);
@@ -30,7 +31,7 @@ public class StartScreen extends BaseScreen {
         Gdx.input.setInputProcessor(stage);
 
         startButtonTexture = new Texture("ui/btn_start.png");
-        Texture startButtonHoverTexture = new Texture("ui/start_yellow.png");
+        startButtonHoverTexture = new Texture("ui/start_yellow.png");
 
         ImageButton.ImageButtonStyle startStyle = new ImageButton.ImageButtonStyle();
         startStyle.imageUp = new TextureRegionDrawable(new TextureRegion(startButtonTexture));
@@ -84,6 +85,6 @@ public class StartScreen extends BaseScreen {
         if (stage != null) stage.dispose();
         if (background != null) background.dispose();
         if (startButtonTexture != null) startButtonTexture.dispose();
+        if (startButtonHoverTexture != null) startButtonHoverTexture.dispose();
     }
 }
-

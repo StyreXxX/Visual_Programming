@@ -25,31 +25,28 @@ allprojects {
   }
 }
 
+// Generate the shared asset manifest once. Defining this task in every subproject
+// made multiple tasks claim the same output file, which Gradle 9 rejects.
+tasks.register('generateAssetList') {
+  inputs.files(fileTree("${project.rootDir}/assets/").exclude("assets.txt"))
+  outputs.file("${project.rootDir}/assets/assets.txt")
+  doLast {
+    File assetsFolder = file("${project.rootDir}/assets/")
+    File assetsFile = new File(assetsFolder, "assets.txt")
+    assetsFile.text = fileTree(assetsFolder)
+      .matching { exclude "assets.txt" }
+      .collect { assetsFolder.relativePath(it) }
+      .sort()
+      .join("\n") + "\n"
+  }
+}
+
 configure(subprojects) {
   apply plugin: 'java-library'
   java.sourceCompatibility = 21
   java.targetCompatibility = 21
 
-  // From https://lyze.dev/2021/04/29/libGDX-Internal-Assets-List/
-  // The article can be helpful when using assets.txt in your project.
-  tasks.register('generateAssetList') {
-    inputs.files(fileTree("${project.rootDir}/assets/").exclude("assets.txt"))
-    outputs.file("${project.rootDir}/assets/assets.txt")
-    // projectFolder/assets
-    File assetsFolder = new File("${project.rootDir}/assets/")
-    // projectFolder/assets/assets.txt
-    File assetsFile = new File(assetsFolder, "assets.txt")
-    // delete that file in case we've already created it
-    assetsFile.delete()
-
-    // iterate through all files inside that folder
-    // convert it to a relative path
-    // and append it to the file assets.txt
-    fileTree(assetsFolder).collect { assetsFolder.relativePath(it) }.sort().each {
-      assetsFile.append(it + "\n")
-    }
-  }
-  processResources.dependsOn 'generateAssetList'
+  processResources.dependsOn rootProject.tasks.named('generateAssetList')
 
   compileJava {
     options.incremental = true

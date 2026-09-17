@@ -71,6 +71,8 @@ public class PlayScreen extends BaseScreen {
     private Table pauseTable;
     private Table optionsTable;
     private Label volumeLabel;
+    private Skin uiSkin;
+    private final com.badlogic.gdx.math.Vector3 inputPosition = new com.badlogic.gdx.math.Vector3();
 
     private float pStartX = 100f;
     private float pStartY = 300f;
@@ -81,6 +83,15 @@ public class PlayScreen extends BaseScreen {
     private HUD hud;
     private int levelIndex;
     private float victoryTime = 0f;
+
+    public PlayScreen(GreenGuardianGame game, SpriteBatch batch, BitmapFont font, OrthographicCamera hudCamera, int levelIndex, PlayScreen previousScreen) {
+        this(game, batch, font, hudCamera, levelIndex);
+        if (previousScreen != null && previousScreen.player != null) {
+            this.player.copyState(previousScreen.player);
+            this.playerSouls = previousScreen.playerSouls;
+            this.playerKeys = previousScreen.playerKeys;
+        }
+    }
 
     public PlayScreen(GreenGuardianGame game, SpriteBatch batch, BitmapFont font, OrthographicCamera hudCamera, int levelIndex) {
         super(game, batch, font, hudCamera);
@@ -187,7 +198,8 @@ public class PlayScreen extends BaseScreen {
     }
 
     private void buildPauseMenu() {
-        Skin skin = new Skin();
+        uiSkin = new Skin();
+        Skin skin = uiSkin;
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.WHITE);
         pixmap.fill();
@@ -268,7 +280,7 @@ public class PlayScreen extends BaseScreen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 game.playButtonSound();
-                game.setScreen(new PlayScreen(game, batch, font, hudCamera, 1));
+                game.setScreen(new PlayScreen(game, batch, font, hudCamera, 1, PlayScreen.this));
             }
         });
 
@@ -276,7 +288,7 @@ public class PlayScreen extends BaseScreen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 game.playButtonSound();
-                game.setScreen(new PlayScreen(game, batch, font, hudCamera, 2));
+                game.setScreen(new PlayScreen(game, batch, font, hudCamera, 2, PlayScreen.this));
             }
         });
 
@@ -375,13 +387,13 @@ public class PlayScreen extends BaseScreen {
         }
 
         if (activeBoss.isDead() && victoryTime > 1.0f && Gdx.input.justTouched()) {
-            com.badlogic.gdx.math.Vector3 mousePos = new com.badlogic.gdx.math.Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+            com.badlogic.gdx.math.Vector3 mousePos = inputPosition.set(Gdx.input.getX(), Gdx.input.getY(), 0);
             hudCamera.unproject(mousePos);
 
             if (mousePos.x >= 490 && mousePos.x <= 790 && mousePos.y >= 295 && mousePos.y <= 345) {
                 ((GreenGuardianGame) game).playButtonSound();
                 if (levelIndex == 1) {
-                    game.setScreen(new PlayScreen(game, batch, font, hudCamera, 2));
+                    game.setScreen(new PlayScreen(game, batch, font, hudCamera, 2, PlayScreen.this));
                 } else {
                     game.setScreen(new MenuScreen(game, batch, font, hudCamera));
                 }
@@ -400,7 +412,7 @@ public class PlayScreen extends BaseScreen {
 
         // Mouse click on Mystic Shop logo below Minimap to toggle Shop
         if (gameState == GameState.PLAYING && !activeBoss.isDead() && Gdx.input.justTouched()) {
-            com.badlogic.gdx.math.Vector3 mPos = new com.badlogic.gdx.math.Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+            com.badlogic.gdx.math.Vector3 mPos = inputPosition.set(Gdx.input.getX(), Gdx.input.getY(), 0);
             hudCamera.unproject(mPos);
             if (mPos.x >= 1118f && mPos.x <= 1118f + 84f && mPos.y >= 502f && mPos.y <= 502f + 84f) {
                 ((GreenGuardianGame) game).playButtonSound();
@@ -408,7 +420,7 @@ public class PlayScreen extends BaseScreen {
                 shopMessage = "";
             }
         } else if (gameState == GameState.SHOP && Gdx.input.justTouched()) {
-            com.badlogic.gdx.math.Vector3 mPos = new com.badlogic.gdx.math.Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+            com.badlogic.gdx.math.Vector3 mPos = inputPosition.set(Gdx.input.getX(), Gdx.input.getY(), 0);
             hudCamera.unproject(mPos);
             // Click outside modal or on the top-right header area cleanly closes shop
             float modalX = 230f, modalY = 95f, modalW = 820f, modalH = 530f;
@@ -508,7 +520,12 @@ public class PlayScreen extends BaseScreen {
         for (Enemy e : enemies) e.draw(batch);
 
         player.draw(batch);
-        activeBoss.draw(batch);
+        // The supplied death sheet contains editor labels (for example, "Frame 2
+        // (Collapse)") baked into the image. Do not render that sheet after the
+        // boss has been defeated; the victory overlay is the final presentation.
+        if (!activeBoss.isDead()) {
+            activeBoss.draw(batch);
+        }
 
         for (Projectile p : projectiles) {
             batch.draw((p.type == 2) ? game.assets.staffProjectileTexture : game.assets.swordProjectileTexture, p.bounds.x, p.bounds.y, p.bounds.width, p.bounds.height);
@@ -749,6 +766,9 @@ public class PlayScreen extends BaseScreen {
     private Rectangle tmpBlockRect = new Rectangle();
 
     private boolean checkMapCollision(Rectangle rect) {
+        if (rect == null || mapBlocks == null) {
+            return false;
+        }
         for (MapObject object : mapBlocks) {
             Rectangle blockRect = null;
 
@@ -800,5 +820,6 @@ public class PlayScreen extends BaseScreen {
         map.dispose();
         mapRenderer.dispose();
         if (uiStage != null) uiStage.dispose();
+        if (uiSkin != null) uiSkin.dispose();
     }
 }

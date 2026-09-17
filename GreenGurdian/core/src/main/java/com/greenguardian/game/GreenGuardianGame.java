@@ -2,6 +2,7 @@ package com.greenguardian.game;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -54,9 +55,9 @@ public class GreenGuardianGame extends Game {
     }
 
     public void setGlobalVolume(float volume) {
-        this.globalVolume = volume;
-        if (startMusic != null) startMusic.setVolume(volume);
-        if (gameplayMusic != null) gameplayMusic.setVolume(volume);
+        this.globalVolume = Math.max(0f, Math.min(1f, volume));
+        if (startMusic != null) startMusic.setVolume(globalVolume);
+        if (gameplayMusic != null) gameplayMusic.setVolume(globalVolume);
     }
 
     public void playButtonSound() {
@@ -67,18 +68,27 @@ public class GreenGuardianGame extends Game {
     }
 
     public void playStartMusic() {
-        if (gameplayMusic.isPlaying()) gameplayMusic.stop();
-        if (!startMusic.isPlaying()) {
+        if (gameplayMusic != null && gameplayMusic.isPlaying()) gameplayMusic.stop();
+        if (startMusic != null && !startMusic.isPlaying()) {
             startMusic.setVolume(globalVolume);
             startMusic.play();
         }
     }
 
     public void playGameplayMusic() {
-        if (startMusic.isPlaying()) startMusic.stop();
-        if (!gameplayMusic.isPlaying()) {
+        if (startMusic != null && startMusic.isPlaying()) startMusic.stop();
+        if (gameplayMusic != null && !gameplayMusic.isPlaying()) {
             gameplayMusic.setVolume(globalVolume);
             gameplayMusic.play();
+        }
+    }
+
+    @Override
+    public void setScreen(Screen nextScreen) {
+        Screen previousScreen = getScreen();
+        super.setScreen(nextScreen);
+        if (previousScreen != null && previousScreen != nextScreen) {
+            previousScreen.dispose();
         }
     }
 
@@ -95,6 +105,9 @@ public class GreenGuardianGame extends Game {
 
     @Override
     public void dispose() {
+        if (getScreen() != null) {
+            getScreen().dispose();
+        }
         super.dispose();
         batch.dispose();
         font.dispose();

@@ -61,7 +61,7 @@ public abstract class Entity {
     }
 
     public void takeDamage(float amount) {
-        if (!isDead) {
+        if (!isDead && Float.isFinite(amount) && amount > 0f) {
             health -= amount;
             if (health <= 0) {
                 isDead = true;
@@ -84,6 +84,9 @@ public abstract class Entity {
     }
 
     protected boolean checkCollision(Rectangle characterBounds, MapObjects blocks, float scale) {
+        if (characterBounds == null || blocks == null || scale <= 0f) {
+            return false;
+        }
         for (MapObject object : blocks) {
             if (object instanceof RectangleMapObject) {
                 Rectangle rect = ((RectangleMapObject) object).getRectangle();

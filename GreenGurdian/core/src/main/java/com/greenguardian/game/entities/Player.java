@@ -28,6 +28,7 @@ public class Player extends Entity {
     private boolean wasInWater = false;
     private float waterDebuffTimer = 0f;
     private boolean hasDealtMeleeDamage = false;
+    private final TextureRegion submergedFrame = new TextureRegion();
 
     private final float JUMP_SPEED = 1000f;
     private final float PLAYER_SPEED = 500f;
@@ -118,6 +119,9 @@ public class Player extends Entity {
 
     @Override
     public void takeDamage(float amount) {
+        if (isDead || !Float.isFinite(amount) || amount <= 0f) {
+            return;
+        }
         super.takeDamage(amount);
         this.lastDamageTaken = amount;
         this.justTookDamage = true;
@@ -167,6 +171,20 @@ public class Player extends Entity {
 
     public boolean hasSoulMagnet() {
         return hasSoulMagnet;
+    }
+
+    public void copyState(Player other) {
+        if (other.hasUnlockedStaff) {
+            this.unlockStaff();
+            this.equippedWeapon = other.equippedWeapon;
+        }
+        this.maxHealth = other.maxHealth;
+        this.health = other.health;
+        this.damageStoneCount = other.damageStoneCount;
+        this.bonusDamageMultiplier = other.bonusDamageMultiplier;
+        if (other.hasSoulMagnet) {
+            this.unlockSoulMagnet();
+        }
     }
 
     public boolean canDealMeleeDamage() {
@@ -350,10 +368,10 @@ public class Player extends Entity {
 
         TextureRegion renderFrame = currentFrame;
         if (inWater) {
-            // Create a temporary region capturing only the top 60% of the texture
-            renderFrame = new TextureRegion(currentFrame, 0, 0,
-                currentFrame.getRegionWidth(),
-                (int)(currentFrame.getRegionHeight() * 0.6f));
+            // Reuse the region to avoid allocating one every rendered frame in water.
+            submergedFrame.setRegion(currentFrame);
+            submergedFrame.setRegionHeight((int) (currentFrame.getRegionHeight() * 0.6f));
+            renderFrame = submergedFrame;
         }
 
         float aspect = (float) currentFrame.getRegionWidth() / currentFrame.getRegionHeight();

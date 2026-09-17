@@ -14,6 +14,7 @@ public class FloatingText {
     public float vy = 55f;
     public float vx = 0f;
     public float scale = 1.0f;
+    private final Color previousFontColor = new Color();
 
     public FloatingText(float x, float y, String text, Color color) {
         this(x, y, text, color, 1.0f, 1.0f);
@@ -38,11 +39,13 @@ public class FloatingText {
 
     public void draw(SpriteBatch batch, BitmapFont font) {
         float alpha = Math.max(0f, 1f - (elapsedTime / duration));
-        Color oldColor = font.getColor();
+        previousFontColor.set(font.getColor());
+        float previousScaleX = font.getData().scaleX;
+        float previousScaleY = font.getData().scaleY;
         font.setColor(color.r, color.g, color.b, alpha);
         font.getData().setScale(scale);
         font.draw(batch, text, x, y);
-        font.getData().setScale(1.0f);
-        font.setColor(oldColor);
+        font.getData().setScale(previousScaleX, previousScaleY);
+        font.setColor(previousFontColor);
     }
 }
