@@ -808,7 +808,11 @@ public class PlayScreen extends BaseScreen {
         if (uiStage != null) {
             uiStage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         }
-        ((GreenGuardianGame) game).playGameplayMusic();
+        if (levelIndex == 2) {
+            ((GreenGuardianGame) game).playLevel2Music();
+        } else {
+            ((GreenGuardianGame) game).playGameplayMusic();
+        }
     }
 
     @Override

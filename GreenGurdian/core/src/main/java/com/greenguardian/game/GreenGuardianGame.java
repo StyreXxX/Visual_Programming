@@ -23,6 +23,7 @@ public class GreenGuardianGame extends Game {
 
     public Music startMusic;
     public Music gameplayMusic;
+    public Music level2Music;
     public Sound buttonSound;
 
     // Default volume at 50%
@@ -48,6 +49,10 @@ public class GreenGuardianGame extends Game {
         gameplayMusic.setLooping(true);
         gameplayMusic.setVolume(globalVolume);
 
+        level2Music = Gdx.audio.newMusic(Gdx.files.internal("audio/level2Music.mp3"));
+        level2Music.setLooping(true);
+        level2Music.setVolume(globalVolume);
+
         buttonSound = Gdx.audio.newSound(Gdx.files.internal("audio/button-click-sound.mp3"));
 
         playStartMusic();
@@ -58,6 +63,7 @@ public class GreenGuardianGame extends Game {
         this.globalVolume = Math.max(0f, Math.min(1f, volume));
         if (startMusic != null) startMusic.setVolume(globalVolume);
         if (gameplayMusic != null) gameplayMusic.setVolume(globalVolume);
+        if (level2Music != null) level2Music.setVolume(globalVolume);
     }
 
     public void playButtonSound() {
@@ -69,6 +75,7 @@ public class GreenGuardianGame extends Game {
 
     public void playStartMusic() {
         if (gameplayMusic != null && gameplayMusic.isPlaying()) gameplayMusic.stop();
+        if (level2Music != null && level2Music.isPlaying()) level2Music.stop();
         if (startMusic != null && !startMusic.isPlaying()) {
             startMusic.setVolume(globalVolume);
             startMusic.play();
@@ -77,9 +84,19 @@ public class GreenGuardianGame extends Game {
 
     public void playGameplayMusic() {
         if (startMusic != null && startMusic.isPlaying()) startMusic.stop();
+        if (level2Music != null && level2Music.isPlaying()) level2Music.stop();
         if (gameplayMusic != null && !gameplayMusic.isPlaying()) {
             gameplayMusic.setVolume(globalVolume);
             gameplayMusic.play();
+        }
+    }
+
+    public void playLevel2Music() {
+        if (startMusic != null && startMusic.isPlaying()) startMusic.stop();
+        if (gameplayMusic != null && gameplayMusic.isPlaying()) gameplayMusic.stop();
+        if (level2Music != null && !level2Music.isPlaying()) {
+            level2Music.setVolume(globalVolume);
+            level2Music.play();
         }
     }
 
@@ -114,6 +131,7 @@ public class GreenGuardianGame extends Game {
         assets.dispose();
         if (startMusic != null) startMusic.dispose();
         if (gameplayMusic != null) gameplayMusic.dispose();
+        if (level2Music != null) level2Music.dispose();
         if (buttonSound != null) buttonSound.dispose();
     }
 }
