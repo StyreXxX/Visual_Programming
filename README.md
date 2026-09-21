@@ -14,8 +14,8 @@ Green Guardian is an immersive 2D action-platformer built from the ground up usi
 ## Team Contributions
 
 Rayhan:
-**Game startup.
-**Introduced Tiled map design
+* **Game startup.
+* **Introduced Tiled map design
 **Made Level 1 Map in Tiled
 **Made Level 1 Boss
 **Made Level 1 npcs
