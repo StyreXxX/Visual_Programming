@@ -14,41 +14,41 @@ Green Guardian is an immersive 2D action-platformer built from the ground up usi
 ## Team Contributions
 
 Rayhan:
-*Game startup.
-*Introduced Tiled map design
-*Made Level 1 Map in Tiled
-*Made Level 1 Boss
-*Made Level 1 npcs
-*Introduced the Shop in the game
-*Introduced the Soul for shop
-*Introduced different weapons(Staff and Sword)
-*Introduced the Fast Travel to different level(Developers Option)
-*Queued Audio in Level 2
-*Made water mechanics in level 2
-*Quality of life changes: introducing sound slidebar in settings
+**Game startup.
+**Introduced Tiled map design
+**Made Level 1 Map in Tiled
+**Made Level 1 Boss
+**Made Level 1 npcs
+**Introduced the Shop in the game
+**Introduced the Soul for shop
+**Introduced different weapons(Staff and Sword)
+**Introduced the Fast Travel to different level(Developers Option)
+**Queued Audio in Level 2
+**Made water mechanics in level 2
+**Quality of life changes: introducing sound slidebar in settings
 
 Nafi:
-*Initialized core game logic, screens, player entity, assets, and level maps.
-*Restructured entire codebase to follow OOP approach
-*Introduced Audio for different interfaces
-*Improved Boss mechanics and encounters.
-*Implemented and organized player animations (stand animation, fading animation, etc.).
-*Replaced hardcoded values and used static polygons for less memory usage.
-*Performed multiple bug fixes and optimizations across the codebase.
-*Created the foundational MenuScreen and StartScreen for the game's entry flow.
-*Resolved multiple bugs related to the rendering and behavior of menus. write this in compact points
+**Initialized core game logic, screens, player entity, assets, and level maps.
+**Restructured entire codebase to follow OOP approach
+**Introduced Audio for different interfaces
+**Improved Boss mechanics and encounters.
+**Implemented and organized player animations (stand animation, fading animation, etc.).
+**Replaced hardcoded values and used static polygons for less memory usage.
+**Performed multiple bug fixes and optimizations across the codebase.
+*8Created the foundational MenuScreen and StartScreen for the game's entry flow.
+**Resolved multiple bugs related to the rendering and behavior of menus. write this in compact points
 
 Afraz:
-*Improved combat and weapon mechanics
-*Introduced weapon slot and hotbar
-*Introduced healing and rpgb mechanics
-*Made Level 2 Map
-*Made level 2 boss and enemy mechanics and design
-*Introduced hud overhaul
-*Introduced minimap radar
-*Improved water mechanics in level 2
-*map fixes(some bugs in level 1 map)
-*animation fixes
+**Improved combat and weapon mechanics
+**Introduced weapon slot and hotbar
+**Introduced healing and rpgb mechanics
+**Made Level 2 Map
+**Made level 2 boss and enemy mechanics and design
+**Introduced hud overhaul
+**Introduced minimap radar
+**Improved water mechanics in level 2
+**map fixes(some bugs in level 1 map)
+**animation fixes
 
 ## Technical Stack
 * **Language:** Java
